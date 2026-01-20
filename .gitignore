@@ -33,6 +33,21 @@ client/.vite/
 client/.next/
 client/coverage/
 
+# ML Service
+ml-service/venv/
+ml-service/env/
+ml-service/.env
+ml-service/__pycache__/
+ml-service/*.pyc
+ml-service/*.pyo
+ml-service/*.pyd
+ml-service/.Python
+ml-service/*.so
+ml-service/*.egg
+ml-service/*.egg-info/
+ml-service/.cache/
+ml-service/models/
+
 # Logs
 *.log
 logs/

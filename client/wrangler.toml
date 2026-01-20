@@ -1,0 +1,12 @@
+# Cloudflare Pages Configuration
+name = "trendscout-client"
+compatibility_date = "2024-01-20"
+
+[build]
+command = "npm run build"
+directory = "dist"
+
+[env.production]
+# Environment variables for production
+# Set these in Cloudflare Pages dashboard
+# VITE_API_URL = "https://your-backend.onrender.com/api"

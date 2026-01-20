@@ -1,74 +1,165 @@
-# TrendScout - TikTok Trend Analysis Platform
+# TrendScout AI - TikTok Trend Analysis Platform
 
-Fullstack приложение для анализа трендов TikTok с AI-генерацией скриптов и отслеживанием конкурентов.
+Fullstack приложение для анализа трендов TikTok с AI-генерацией скриптов, машинным обучением и отслеживанием конкурентов.
 
-## 📁 Структура проекта
+## 🏗️ Архитектура (Microservices)
+
+Проект разделен на 3 независимых сервиса для оптимального деплоя:
 
 ```
 trendscout/
-├── server/           # Python FastAPI Backend
-│   ├── app/          # Основной код приложения
-│   ├── requirements.txt
-│   └── README.md     # Документация server
+├── client/           # Frontend (Cloudflare Pages)
+│   ├── src/          # React + TypeScript
+│   └── README.md
 │
-└── client/           # Vite + React Frontend
-    ├── src/          # Исходный код
-    ├── package.json
-    └── README.md     # Документация client
+├── server/           # Backend API (Render/Railway)
+│   ├── app/          # FastAPI + PostgreSQL
+│   └── README.md
+│
+└── ml-service/       # ML Service (Railway)
+    ├── app/          # CLIP + Anthropic Claude
+    └── README.md
 ```
 
-## 🚀 Быстрый старт
+## 🚀 Быстрый старт (Development)
 
-### Server (Backend)
+### 1. ML Service (порт 8001)
+
+```bash
+cd ml-service
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+
+# Создайте .env (см. ml-service/.env.example)
+python -m app.main
+```
+
+### 2. Backend (порт 8000)
 
 ```bash
 cd server
 python3 -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
+source venv/bin/activate
 pip install -r requirements.txt
 
-# Создайте .env файл (см. server/.env.example)
+# Создайте .env (см. server/.env.example)
+# Укажите ML_SERVICE_URL=http://localhost:8001
 python -m app.main
 ```
 
-Server запустится на: **http://localhost:8000**
-
-### Client (Frontend)
+### 3. Frontend (порт 5173)
 
 ```bash
 cd client
 npm install
 
-# Создайте .env файл с: VITE_API_URL=http://localhost:8000/api
+# Создайте .env: VITE_API_URL=http://localhost:8000/api
 npm run dev
 ```
 
-Client запустится на: **http://localhost:5173**
+**Откройте**: http://localhost:5173
 
-## 📚 Документация
+## 🌐 Production Deployment
 
-- **Server**: См. [server/README.md](./server/README.md)
-- **Client**: См. [client/README.md](./client/README.md)
+**Полное руководство**: [DEPLOYMENT.md](./DEPLOYMENT.md)
+
+### Рекомендуемая конфигурация:
+
+| Сервис | Платформа | URL |
+|--------|-----------|-----|
+| Frontend | Cloudflare Pages | `https://your-app.pages.dev` |
+| Backend | Render.com | `https://your-backend.onrender.com` |
+| ML Service | Railway.app | `https://your-ml.railway.app` |
+| Database | Supabase | `postgresql://...` |
 
 ## 🛠 Технологии
 
+### Frontend (Client)
+- **Vite 7** - Build tool
+- **React 19** + TypeScript
+- **Tailwind CSS** + shadcn/ui
+- **React Router 7**
+- **Recharts** - Графики
+
+### Backend (Server)
+- **FastAPI** - Web framework
+- **PostgreSQL** + pgvector
+- **SQLAlchemy** - ORM
+- **Apify** - TikTok data collection
+- **APScheduler** - Background tasks
+
+### ML Service
+- **PyTorch** + Transformers
+- **CLIP** (OpenAI) - Image embeddings
+- **Anthropic Claude** - AI generation
+- **scikit-learn** - Clustering
+
+## 🔥 Ключевые возможности
+
+- ✅ **Deep Scan** - 6-уровневая система оценки трендов (UTS Score)
+- ✅ **Visual Clustering** - Группировка похожего контента через CLIP
+- ✅ **Auto Rescan** - Автоматическое отслеживание роста
+- ✅ **AI Scripts** - Генерация TikTok сценариев
+- ✅ **Competitor Tracking** - Мониторинг конкурентов
+- ✅ **Real-time Search** - Поиск с кэшированием
+
+## 📚 Документация
+
+- **Deployment**: [DEPLOYMENT.md](./DEPLOYMENT.md) - Полное руководство по деплою
+- **Client**: [client/README.md](./client/README.md) - Frontend документация
+- **Server**: [server/README.md](./server/README.md) - Backend документация
+- **ML Service**: [ml-service/README.md](./ml-service/README.md) - ML документация
+
+## 🔐 Environment Variables
+
+### ML Service
+```env
+ANTHROPIC_API_KEY=sk-ant-xxx...
+PORT=8001
+```
+
 ### Backend
-- FastAPI
-- PostgreSQL + pgvector
-- Apify (TikTok scraping)
-- APScheduler
+```env
+DATABASE_URL=postgresql://...
+APIFY_API_TOKEN=xxx...
+ML_SERVICE_URL=http://localhost:8001
+SECRET_KEY=xxx...
+```
 
 ### Frontend
-- Vite + React + TypeScript
-- Tailwind CSS + shadcn/ui
-- React Router
+```env
+VITE_API_URL=http://localhost:8000/api
+```
 
 ## 🔒 Безопасность
 
 - Никогда не коммитьте `.env` файлы
 - Используйте `.env.example` как шаблон
-- Храните секреты в переменных окружения на хостинге
+- Храните секреты в переменных окружения
+- Регулярно обновляйте зависимости
+
+## 💰 Стоимость (примерная)
+
+- **Free tier**: $0/месяц (с ограничениями)
+- **Production**: ~$12-15/месяц
+  - Cloudflare Pages: Free
+  - Render Backend: $7/месяц
+  - Railway ML: $5/месяц
+  - Supabase DB: Free
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create your feature branch
+3. Commit your changes
+4. Push to the branch
+5. Open a Pull Request
 
 ## 📝 Лицензия
 
 Создано для образовательных и коммерческих целей.
+
+---
+
+**Built with ❤️ using FastAPI, React, and Machine Learning**

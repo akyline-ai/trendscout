@@ -8,10 +8,6 @@ pydantic
 pydantic-settings
 requests
 apify-client
-anthropic
-transformers
-torch
-pillow
 numpy
 scikit-learn
 apscheduler
