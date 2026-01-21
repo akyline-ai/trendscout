@@ -11,7 +11,7 @@ from ..core.database import get_db
 from ..db.models import Trend
 from ..services.collector import TikTokCollector
 from ..services.scorer import TrendScorer
-from ..services.ai import get_image_embedding
+from ..services.ml_client import get_ml_client
 from ..services.clustering import cluster_trends_by_visuals 
 
 # ИМПОРТ ПЛАНИРОВЩИКА
