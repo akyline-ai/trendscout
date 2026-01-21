@@ -32,6 +32,7 @@ try:
     print("✅  Tables created successfully!")
 except Exception as e:
     print(f"❌  Error creating tables: {e}")
+    print("⚠️  Continuing without database - API will have limited functionality")
 # --------------------------------------------------------
 
 app = FastAPI(
@@ -57,9 +58,13 @@ app.include_router(profiles.router, prefix="/api/profiles", tags=["Profiles"])
 @app.on_event("startup")
 async def startup_event():
     """Эта функция запускается один раз при старте сервера"""
-    print("⏳ Initializing Background Scheduler...")
-    start_scheduler()
-    print("✅ Scheduler is running and waiting for tasks.")
+    try:
+        print("⏳ Initializing Background Scheduler...")
+        start_scheduler()
+        print("✅ Scheduler is running and waiting for tasks.")
+    except Exception as e:
+        print(f"⚠️  Scheduler initialization failed: {e}")
+        print("⚠️  Continuing without scheduler - auto-rescan will be disabled")
 # ------------------------------------------
 
 @app.get("/")
