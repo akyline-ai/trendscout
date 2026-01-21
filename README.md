@@ -12,7 +12,7 @@ trendscout/
 │   ├── src/          # React + TypeScript
 │   └── README.md
 │
-├── server/           # Backend API (Render/Railway)
+├── server/           # Backend API (Railway)
 │   ├── app/          # FastAPI + PostgreSQL
 │   └── README.md
 │
@@ -69,8 +69,8 @@ npm run dev
 | Сервис | Платформа | URL |
 |--------|-----------|-----|
 | Frontend | Cloudflare Pages | `https://your-app.pages.dev` |
-| Backend | Render.com | `https://your-backend.onrender.com` |
-| ML Service | Railway.app | `https://your-ml.railway.app` |
+| Backend | Railway.app | `https://your-backend.up.railway.app` |
+| ML Service | Railway.app | `https://your-ml.up.railway.app` |
 | Database | Supabase | `postgresql://...` |
 
 ## 🛠 Технологии
@@ -142,10 +142,10 @@ VITE_API_URL=http://localhost:8000/api
 ## 💰 Стоимость (примерная)
 
 - **Free tier**: $0/месяц (с ограничениями)
-- **Production**: ~$12-15/месяц
+- **Production**: ~$10/месяц
   - Cloudflare Pages: Free
-  - Render Backend: $7/месяц
-  - Railway ML: $5/месяц
+  - Railway Backend: $5/месяц
+  - Railway ML Service: $5/месяц
   - Supabase DB: Free
 
 ## 🤝 Contributing

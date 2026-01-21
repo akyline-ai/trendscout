@@ -48,6 +48,9 @@ ml-service/*.egg-info/
 ml-service/.cache/
 ml-service/models/
 
+# Backend folder (duplicate)
+backend/
+
 # Logs
 *.log
 logs/

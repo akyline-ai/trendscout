@@ -74,7 +74,7 @@ SELECT * FROM pg_extension WHERE extname = 'vector';
 
 ### 1. Deploy to Render
 
-- [ ] Создан аккаунт на https://render.com
+- [ ] Создан аккаунт на https://railway.app
 - [ ] New → Web Service
 - [ ] Repository подключен
 - [ ] Root directory установлен: `/server`
@@ -102,12 +102,12 @@ SELECT * FROM pg_extension WHERE extname = 'vector';
 - [ ] Build прошел успешно (~5-10 минут)
 - [ ] Service запустился
 - [ ] Логи показывают "Tables created successfully!"
-- [ ] Получен public URL: `https://xxxxx.onrender.com`
+- [ ] Получен public URL: `https://xxxxx.onrailway.app`
 
 ### 5. Testing
 
-- [ ] Health check: `curl https://your-backend.onrender.com/`
-- [ ] API docs: `https://your-backend.onrender.com/docs`
+- [ ] Health check: `curl https://your-backend.onrailway.app/`
+- [ ] API docs: `https://your-backend.onrailway.app/docs`
 - [ ] ML Service connection работает (проверить логи)
 - [ ] Database connection OK (проверить логи)
 
@@ -134,7 +134,7 @@ SELECT * FROM pg_extension WHERE extname = 'vector';
 
 Добавить в Cloudflare Pages → Settings → Environment variables:
 
-- [ ] `VITE_API_URL` = `https://your-backend.onrender.com/api`
+- [ ] `VITE_API_URL` = `https://your-backend.onrailway.app/api`
 
 ### 4. Deployment
 
@@ -203,7 +203,7 @@ app.add_middleware(
 ### Health Checks
 
 - [ ] ML Service health: `https://your-ml.railway.app/`
-- [ ] Backend health: `https://your-backend.onrender.com/`
+- [ ] Backend health: `https://your-backend.onrailway.app/`
 - [ ] Frontend health: `https://your-frontend.pages.dev/`
 
 ### Logs
@@ -228,7 +228,7 @@ app.add_middleware(
 
 ```
 ML Service:    https://_____.up.railway.app
-Backend API:   https://_____.onrender.com
+Backend API:   https://_____.onrailway.app
 Frontend:      https://_____.pages.dev
 Database:      postgresql://_____
 ```
@@ -297,7 +297,7 @@ Database:      postgresql://_____
 
 **Production URLs**:
 - Frontend: `https://your-frontend.pages.dev`
-- API Docs: `https://your-backend.onrender.com/docs`
+- API Docs: `https://your-backend.onrailway.app/docs`
 - ML Docs: `https://your-ml.railway.app/docs`
 
 ---

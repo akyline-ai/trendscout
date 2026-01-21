@@ -23,7 +23,7 @@ TrendScout AI - Project Structure
 │       ├── 📁 services/         # API client
 │       └── 📁 types/            # TypeScript types
 │
-├── 🔧 server/                   # Backend API (Render.com)
+├── 🔧 server/                   # Backend API (Railway.app)
 │   ├── 📄 README.md
 │   ├── 📄 requirements.txt      # Python dependencies (13 packages)
 │   ├── 📄 Procfile              # Render config
@@ -125,7 +125,7 @@ Deployment Platforms
 ====================
 
 - Frontend: Cloudflare Pages (Free)
-- Backend: Render.com ($7/month)
+- Backend: Railway.app ($7/month)
 - ML Service: Railway.app ($5/month)
 - Database: Supabase (Free)
 
@@ -204,7 +204,7 @@ Production URLs
 ===============
 
 Frontend:  https://your-app.pages.dev
-Backend:   https://your-backend.onrender.com
+Backend:   https://your-backend.onrailway.app
 ML Service: https://your-ml.railway.app
 Database:  postgresql://...
 

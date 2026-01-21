@@ -81,7 +81,7 @@ client/
 
 ### 2. Backend (Server)
 
-**Platform**: Render.com
+**Platform**: Railway.app
 **Stack**: FastAPI + PostgreSQL + SQLAlchemy
 **Port**: 8000
 

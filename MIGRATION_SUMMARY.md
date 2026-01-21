@@ -417,7 +417,7 @@ npm run dev
 
 1. **Local testing**: Run all 3 services locally
 2. **Deploy ML Service**: Railway.app
-3. **Deploy Backend**: Render.com
+3. **Deploy Backend**: Railway.app
 4. **Deploy Frontend**: Cloudflare Pages
 5. **Monitor**: Check logs and performance
 6. **Optimize**: Add caching, rate limiting
