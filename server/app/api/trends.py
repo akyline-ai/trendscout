@@ -81,9 +81,13 @@ def get_saved_results(keyword: str, mode: str = "keywords", db: Session = Depend
 @router.post("/search")
 def search_trends(req: SearchRequest, db: Session = Depends(get_db)):
     """Deep Scan + Auto Rescan Scheduler (Point A Setup)"""
-    search_targets = [req.target] if req.target else req.keywords
-    if not search_targets or not search_targets[0]:
-        return {"status": "error", "message": "No query provided"}
+    try:
+        search_targets = [req.target] if req.target else req.keywords
+        if not search_targets or not search_targets[0]:
+            return {"status": "error", "message": "No query provided"}
+    except Exception as e:
+        print(f"❌ Error parsing request: {e}")
+        raise HTTPException(status_code=400, detail=f"Invalid request: {str(e)}")
 
     print(f"🔎 API Search [{req.mode}]: {search_targets} (Deep: {req.is_deep})")
     
@@ -94,12 +98,16 @@ def search_trends(req: SearchRequest, db: Session = Depends(get_db)):
     # 1. Для обычного поиска (не deep) - сначала проверяем кэш
     if not req.is_deep and req.mode != "username":
         limit = 20
-        # Проверяем кэш в базе данных
-        clean_nick = search_targets[0].lower().strip().replace("@", "")
-        search_term = f"%{clean_nick}%"
-        cached_results = db.query(Trend).filter(
-            or_(Trend.description.ilike(search_term), Trend.vertical.ilike(search_term))
-        ).order_by(Trend.uts_score.desc()).limit(limit).all()
+        try:
+            # Проверяем кэш в базе данных
+            clean_nick = search_targets[0].lower().strip().replace("@", "")
+            search_term = f"%{clean_nick}%"
+            cached_results = db.query(Trend).filter(
+                or_(Trend.description.ilike(search_term), Trend.vertical.ilike(search_term))
+            ).order_by(Trend.uts_score.desc()).limit(limit).all()
+        except Exception as e:
+            print(f"❌ Error querying database cache: {e}")
+            cached_results = []
         
         # Если есть свежие кэшированные данные (не старше 1 часа), используем их
         if cached_results:
