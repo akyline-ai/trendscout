@@ -2,6 +2,26 @@
 
 Fullstack приложение для анализа трендов TikTok с AI-генерацией скриптов, машинным обучением и отслеживанием конкурентов.
 
+## 📅 Changelog
+
+### 2025-01-29
+- ✅ Fix: Кнопка "Save Video" теперь показывает понятное сообщение для Light mode
+- ✅ Fix: Исправлен маппинг `trend_id` для сохранения в избранное
+- ✅ Add: Страницы DeepAnalysis, Feedback, Saved
+- ✅ Add: Favorites API с изоляцией данных пользователей
+- ✅ Add: Database migrations (Alembic)
+
+### 2025-01-28
+- ✅ Add: Deep Analyze progress component
+- ✅ Add: Upgrade modal для PRO features
+- ✅ Add: Competitors functionality
+
+### 2025-01-26
+- ✅ Add: Unified sidebar with tabs
+- ✅ Add: Google OAuth authentication
+
+---
+
 ## 🏗️ Архитектура (Microservices)
 
 Проект разделен на 3 независимых сервиса для оптимального деплоя:
@@ -60,6 +80,20 @@ npm run dev
 
 **Откройте**: http://localhost:5173
 
+## 💎 Subscription Tiers
+
+| Tier | Rate Limit | Deep Analyze | Save Videos |
+|------|------------|--------------|-------------|
+| FREE | 10 req/min | ❌ | ❌ |
+| CREATOR | 30 req/min | ❌ | ❌ |
+| PRO | 100 req/min | ✅ 20/день | ✅ |
+| AGENCY | 500 req/min | ✅ 100/день | ✅ |
+
+**Изменить tier через Supabase:**
+```sql
+UPDATE users SET subscription_tier = 'pro' WHERE email = 'user@example.com';
+```
+
 ## 🌐 Production Deployment
 
 **Полное руководство**: [DEPLOYMENT.md](./DEPLOYMENT.md)
@@ -103,6 +137,7 @@ npm run dev
 - ✅ **AI Scripts** - Генерация TikTok сценариев
 - ✅ **Competitor Tracking** - Мониторинг конкурентов
 - ✅ **Real-time Search** - Поиск с кэшированием
+- ✅ **User Data Isolation** - Изоляция данных между пользователями
 
 ## 📚 Документация
 
