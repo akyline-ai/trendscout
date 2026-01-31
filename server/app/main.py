@@ -78,6 +78,43 @@ Enterprise-grade API for:
 # MIDDLEWARE
 # =============================================================================
 
+# API Key protection for production
+API_SECRET_KEY = os.getenv("API_SECRET_KEY", "")  # Set in .env for protection
+
+@app.middleware("http")
+async def api_key_middleware(request: Request, call_next):
+    """Protect API with secret key in production."""
+    # Skip protection if no key is set (development) or for public endpoints
+    public_paths = ["/", "/health", "/docs", "/redoc", "/openapi.json", "/api/auth/login", "/api/auth/register", "/api/auth/oauth/sync"]
+
+    if API_SECRET_KEY and request.url.path not in public_paths:
+        # Check for API key in header
+        api_key = request.headers.get("X-API-Key")
+        # Also allow via query param for OAuth callbacks
+        if not api_key:
+            api_key = request.query_params.get("api_key")
+
+        # Skip check for OAuth callbacks (they use state for security)
+        if "/oauth/" in request.url.path and "/callback" in request.url.path:
+            return await call_next(request)
+
+        # Skip if Authorization header present (JWT auth)
+        if request.headers.get("Authorization"):
+            return await call_next(request)
+
+        # Skip if token in query (OAuth initiation)
+        if request.query_params.get("token"):
+            return await call_next(request)
+
+        if api_key != API_SECRET_KEY:
+            return JSONResponse(
+                status_code=403,
+                content={"detail": "Invalid or missing API key"}
+            )
+
+    return await call_next(request)
+
+
 # CORS - Production-ready configuration
 ALLOWED_ORIGINS = [
     "http://localhost:3000",
