@@ -49,7 +49,7 @@ const DEEP_ANALYZE_FEATURES = [
   },
 ];
 
-export function UpgradeModal({ isOpen, onClose, feature: _feature }: UpgradeModalProps) {
+export function UpgradeModal({ isOpen, onClose, feature }: UpgradeModalProps) {
   const navigate = useNavigate();
 
   const handleUpgrade = () => {
@@ -111,7 +111,7 @@ export function UpgradeModal({ isOpen, onClose, feature: _feature }: UpgradeModa
                   Velocity & saturation
                 </li>
                 <li className="text-xs italic font-semibold text-purple-600">
-                  Exclusive to Rizko.ai
+                  Exclusive to Risko.ai
                 </li>
               </ul>
             </div>
