@@ -28,61 +28,91 @@ import {
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { ComingSoonModal } from '@/components/ComingSoonModal';
+import { features, REVIEW_MODE } from '@/config/features';
+import { Video, Link as LinkIcon } from 'lucide-react';
 
 interface MobileSidebarProps {
   open: boolean;
   onClose: () => void;
 }
 
-const mainNavItems = [
-  {
-    title: 'Dashboard',
-    href: '/dashboard',
-    icon: LayoutDashboard,
-  },
-  {
-    title: 'Trending Now',
-    href: '/dashboard/trending',
-    icon: TrendingUp,
-    badge: 'NEW',
-    badgeVariant: 'default' as const,
-  },
-  {
-    title: 'Discover Videos',
-    href: '/dashboard/discover',
-    icon: Search,
-  },
-  {
-    title: 'Deep Analysis',
-    href: '/dashboard/analytics',
-    icon: BarChart3,
-  },
-  {
-    title: 'Competitors',
-    href: '/dashboard/competitors',
-    icon: Users,
-  },
-  {
-    title: 'Feedback',
-    href: '/dashboard/feedback',
-    icon: MessageSquare,
-  },
-];
+// Dynamic navigation items based on REVIEW_MODE
+const getMainNavItems = () => {
+  const items = [
+    {
+      title: 'Dashboard',
+      href: '/dashboard',
+      icon: LayoutDashboard,
+      show: true,
+    },
+    {
+      title: 'My Videos',
+      href: '/dashboard/my-videos',
+      icon: Video,
+      show: features.myVideos,
+    },
+    {
+      title: 'Connect Accounts',
+      href: '/dashboard/connect-accounts',
+      icon: LinkIcon,
+      show: features.tiktokOAuth,
+    },
+    {
+      title: 'Trending Now',
+      href: '/dashboard/trending',
+      icon: TrendingUp,
+      badge: 'NEW',
+      badgeVariant: 'default' as const,
+      show: features.trending,
+    },
+    {
+      title: 'Discover Videos',
+      href: '/dashboard/discover',
+      icon: Search,
+      show: features.trendDiscovery,
+    },
+    {
+      title: 'Deep Analysis',
+      href: '/dashboard/analytics',
+      icon: BarChart3,
+      show: features.deepAnalysis,
+    },
+    {
+      title: 'Competitors',
+      href: '/dashboard/competitors',
+      icon: Users,
+      show: features.competitors,
+    },
+    {
+      title: 'Feedback',
+      href: '/dashboard/feedback',
+      icon: MessageSquare,
+      show: true,
+    },
+  ];
 
-const comingSoonItems = [
-  {
-    title: 'Publish Hub',
-    icon: Rocket,
-    badge: 'BETA',
-    modalType: 'publish' as const,
-  },
-  {
-    title: 'Marketplace',
-    icon: Store,
-    badge: 'BETA',
-    modalType: 'marketplace' as const,
-  },
-];
+  return items.filter(item => item.show);
+};
+
+// Dynamic coming soon items based on REVIEW_MODE
+const getComingSoonItems = () => {
+  if (REVIEW_MODE) return [];
+
+  return [
+    {
+      title: 'Publish Hub',
+      icon: Rocket,
+      badge: 'BETA',
+      modalType: 'publish' as const,
+    },
+    {
+      title: 'Marketplace',
+      icon: Store,
+      badge: 'BETA',
+      modalType: 'marketplace' as const,
+    },
+  ];
+};
 
 export function MobileSidebar({ open, onClose }: MobileSidebarProps) {
   const location = useLocation();
@@ -124,14 +154,14 @@ export function MobileSidebar({ open, onClose }: MobileSidebarProps) {
                 <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold text-sm shadow-lg">
                   TS
                 </div>
-                <SheetTitle className="font-semibold">Risko.ai</SheetTitle>
+                <SheetTitle className="font-semibold">Rizko.ai</SheetTitle>
               </div>
             </div>
           </SheetHeader>
 
           {/* Navigation */}
           <nav className="flex-1 space-y-1 p-3 overflow-y-auto">
-            {mainNavItems.map((item) => {
+            {getMainNavItems().map((item) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.href;
 
@@ -165,8 +195,8 @@ export function MobileSidebar({ open, onClose }: MobileSidebarProps) {
               );
             })}
 
-            {/* Coming Soon Items */}
-            {comingSoonItems.map((item) => {
+            {/* Coming Soon Items - Hidden in REVIEW_MODE */}
+            {getComingSoonItems().map((item) => {
               const Icon = item.icon;
               const handleClick = () => {
                 if (item.modalType === 'publish') {
