@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Link2, CheckCircle2, XCircle, ExternalLink, RefreshCw, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -39,6 +40,8 @@ interface ConnectedAccount {
 
 export function ConnectAccountsPage() {
   const { getAccessToken } = useAuth();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   // Состояние подключенных аккаунтов
   const [accounts, setAccounts] = useState<ConnectedAccount[]>([
@@ -50,6 +53,24 @@ export function ConnectAccountsPage() {
   const [connecting, setConnecting] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [disconnecting, setDisconnecting] = useState<string | null>(null);
+
+  // Обработка success параметра после OAuth callback
+  useEffect(() => {
+    const success = searchParams.get('success');
+    const error = searchParams.get('error');
+
+    if (success) {
+      // Показываем toast и очищаем URL параметры
+      toast.success(`Your ${success} account has been connected successfully!`);
+      // Перезагружаем список аккаунтов
+      fetchConnectedAccounts();
+      // Убираем параметры из URL
+      navigate('/dashboard/connect-accounts', { replace: true });
+    } else if (error) {
+      toast.error(decodeURIComponent(error) || 'Failed to connect account. Please try again.');
+      navigate('/dashboard/connect-accounts', { replace: true });
+    }
+  }, [searchParams, navigate]);
 
   // Загрузка подключенных аккаунтов при монтировании
   useEffect(() => {
