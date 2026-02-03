@@ -2,6 +2,9 @@
 Feedback API Routes
 Handles user feedback submission, retrieval, and management.
 """
+import os
+import httpx
+import logging
 from typing import Optional
 from pydantic import BaseModel
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -11,6 +14,69 @@ from datetime import datetime
 from ...core.database import get_db
 from ...api.dependencies import get_current_user, get_current_user_optional
 from ...db.models import Feedback, User
+
+logger = logging.getLogger(__name__)
+
+# Discord Webhook URL from environment variable
+DISCORD_FEEDBACK_WEBHOOK = os.getenv("DISCORD_FEEDBACK_WEBHOOK", "")
+
+
+async def send_discord_notification(feedback: Feedback, user_email: Optional[str] = None):
+    """Send feedback notification to Discord channel."""
+    if not DISCORD_FEEDBACK_WEBHOOK:
+        logger.warning("Discord webhook not configured, skipping notification")
+        return
+
+    # Emoji mapping for feedback types
+    type_emoji = {
+        "idea": "💡",
+        "bug": "🐛",
+        "love": "❤️",
+        "other": "📝"
+    }
+
+    # Rating stars
+    rating_str = ""
+    if feedback.rating:
+        rating_str = "⭐" * feedback.rating + "☆" * (5 - feedback.rating)
+
+    # Build Discord embed
+    embed = {
+        "title": f"{type_emoji.get(feedback.feedback_type, '📝')} New Feedback: {feedback.feedback_type.upper()}",
+        "description": feedback.message[:2000],  # Discord limit
+        "color": {
+            "idea": 0x3498db,   # Blue
+            "bug": 0xe74c3c,    # Red
+            "love": 0xe91e63,   # Pink
+            "other": 0x9b59b6  # Purple
+        }.get(feedback.feedback_type, 0x95a5a6),
+        "fields": [],
+        "timestamp": feedback.created_at.isoformat()
+    }
+
+    if rating_str:
+        embed["fields"].append({"name": "Rating", "value": rating_str, "inline": True})
+
+    if user_email:
+        embed["fields"].append({"name": "User", "value": user_email, "inline": True})
+    else:
+        embed["fields"].append({"name": "User", "value": "Anonymous", "inline": True})
+
+    embed["fields"].append({"name": "ID", "value": str(feedback.id), "inline": True})
+
+    payload = {
+        "username": "Rizko Feedback",
+        "avatar_url": "https://rizko.ai/icon.png",
+        "embeds": [embed]
+    }
+
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(DISCORD_FEEDBACK_WEBHOOK, json=payload)
+            if response.status_code not in [200, 204]:
+                logger.error(f"Discord webhook failed: {response.status_code} - {response.text}")
+    except Exception as e:
+        logger.error(f"Failed to send Discord notification: {e}")
 
 router = APIRouter(prefix="/feedback", tags=["Feedback"])
 
@@ -78,6 +144,16 @@ async def submit_feedback(
     db.add(feedback)
     db.commit()
     db.refresh(feedback)
+
+    # Send Discord notification (non-blocking)
+    try:
+        await send_discord_notification(
+            feedback=feedback,
+            user_email=current_user.email if current_user else None
+        )
+    except Exception as e:
+        logger.error(f"Discord notification error: {e}")
+        # Don't fail the request if Discord fails
 
     return {
         "success": True,
