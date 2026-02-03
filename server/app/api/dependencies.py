@@ -299,7 +299,9 @@ async def get_current_user_optional(
 
     try:
         return await get_current_user(credentials, db)
-    except HTTPException:
+    except (HTTPException, Exception):
+        # Return None for any auth error - this endpoint works for both
+        # authenticated and anonymous users
         return None
 
 
