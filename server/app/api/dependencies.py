@@ -28,7 +28,7 @@ from ..core.database import get_db
 from ..core.security import decode_token
 from ..db.models import User, UserSettings, SubscriptionTier
 
-# TEMPORARY: Debug logging for troubleshooting feedback authentication
+# Logger for authentication debugging and monitoring
 logger = logging.getLogger(__name__)
 
 
@@ -300,29 +300,22 @@ async def get_current_user_optional(
     Useful for endpoints that work differently for authenticated users.
     """
     if credentials is None:
-        logger.info("🔍 [TROUBLESHOOT] get_current_user_optional: No credentials provided")
+        logger.debug("get_current_user_optional: No credentials provided")
         return None
 
     try:
-        # TEMPORARY: Log token info for debugging
-        token_preview = credentials.credentials[:20] + "..." if len(credentials.credentials) > 20 else credentials.credentials
-        logger.info(f"🔍 [TROUBLESHOOT] get_current_user_optional: Token received (preview): {token_preview}")
-
         user = await get_current_user(request, credentials, db)
-
-        logger.info(f"✅ [TROUBLESHOOT] get_current_user_optional: User authenticated successfully - ID: {user.id}, Email: {user.email}")
+        logger.debug(f"get_current_user_optional: User authenticated - ID: {user.id}")
         return user
 
     except HTTPException as http_exc:
-        # TEMPORARY: Log HTTP exceptions for debugging
-        logger.warning(f"⚠️ [TROUBLESHOOT] get_current_user_optional: HTTPException caught - Status: {http_exc.status_code}, Detail: {http_exc.detail}")
+        # Log authentication failures for security monitoring
+        logger.warning(f"Auth failed: {http_exc.status_code} - {http_exc.detail}")
         return None
 
     except Exception as exc:
-        # TEMPORARY: Log all other exceptions for debugging
-        logger.error(f"❌ [TROUBLESHOOT] get_current_user_optional: Unexpected exception - Type: {type(exc).__name__}, Message: {str(exc)}")
-        import traceback
-        logger.error(f"❌ [TROUBLESHOOT] Full traceback:\n{traceback.format_exc()}")
+        # Critical: unexpected auth errors should be investigated
+        logger.error(f"Unexpected auth error: {type(exc).__name__} - {str(exc)}", exc_info=True)
         return None
 
 

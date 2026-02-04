@@ -9,7 +9,7 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 from ..core.config import settings
 
-# TEMPORARY: Debug logging for troubleshooting
+# Logger for security and token operations
 logger = logging.getLogger(__name__)
 
 # Password hashing context using bcrypt
@@ -99,20 +99,15 @@ def decode_token(token: str) -> Optional[dict]:
         Decoded token payload if valid, None otherwise
     """
     try:
-        # TEMPORARY: Log token decoding attempt
-        token_preview = token[:20] + "..." if len(token) > 20 else token
-        logger.info(f"🔑 [TROUBLESHOOT] decode_token: Attempting to decode token (preview): {token_preview}")
-
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
-
-        logger.info(f"✅ [TROUBLESHOOT] decode_token: Successfully decoded token - sub: {payload.get('sub')}, exp: {payload.get('exp')}")
+        logger.debug(f"Token decoded successfully - sub: {payload.get('sub')}")
         return payload
 
     except JWTError as jwt_err:
-        # TEMPORARY: Log JWT decoding errors
-        logger.error(f"❌ [TROUBLESHOOT] decode_token: JWTError - {type(jwt_err).__name__}: {str(jwt_err)}")
+        # Security: Log JWT errors for monitoring potential attacks
+        logger.warning(f"JWT decode failed: {type(jwt_err).__name__}")
         return None
     except Exception as exc:
-        # TEMPORARY: Log unexpected errors
-        logger.error(f"❌ [TROUBLESHOOT] decode_token: Unexpected error - {type(exc).__name__}: {str(exc)}")
+        # Critical: unexpected errors in token decoding
+        logger.error(f"Token decode error: {type(exc).__name__}", exc_info=True)
         return None
