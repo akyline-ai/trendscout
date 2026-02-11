@@ -472,69 +472,74 @@ def save_video_to_favorites(
     Used for Light Analyze videos that don't have a trend_id yet.
     Creates the Trend record if needed, then adds to favorites.
     """
-    logger.info(f"📥 save-video request: platform_id={data.platform_id}, play_addr_len={len(data.play_addr or '')}, play_addr_preview={repr((data.play_addr or '')[:80])}")
+    try:
+        logger.info(f"📥 save-video request: platform_id={data.platform_id}, user={current_user.id}")
 
-    # Check if trend already exists for this user
-    existing_trend = db.query(Trend).filter(
-        Trend.platform_id == data.platform_id,
-        Trend.user_id == current_user.id
-    ).first()
+        # Check if trend already exists for this user
+        existing_trend = db.query(Trend).filter(
+            Trend.platform_id == data.platform_id,
+            Trend.user_id == current_user.id
+        ).first()
 
-    if existing_trend:
-        trend = existing_trend
-        # Update stats
-        trend.stats = data.stats
-        trend.cover_url = data.cover_url
-        trend.play_addr = data.play_addr
-    else:
-        # Create new trend
-        trend = Trend(
+        if existing_trend:
+            trend = existing_trend
+            # Update stats
+            trend.stats = data.stats
+            trend.cover_url = data.cover_url
+            trend.play_addr = data.play_addr
+        else:
+            # Create new trend
+            trend = Trend(
+                user_id=current_user.id,
+                platform_id=data.platform_id,
+                url=data.url,
+                play_addr=data.play_addr,
+                cover_url=data.cover_url,
+                description=data.description,
+                stats=data.stats,
+                initial_stats=data.stats,
+                author_username=data.author_username,
+                author_followers=0,
+                uts_score=data.viral_score,
+                vertical="saved",
+                search_mode=DBSearchMode.KEYWORDS,
+                is_deep_scan=False,
+            )
+            db.add(trend)
+            db.flush()
+
+        # Check if already favorited
+        existing_fav = db.query(UserFavorite).filter(
+            UserFavorite.user_id == current_user.id,
+            UserFavorite.trend_id == trend.id
+        ).first()
+
+        if existing_fav:
+            db.commit()
+            return {
+                "id": existing_fav.id,
+                "trend_id": trend.id,
+                "message": "Already saved"
+            }
+
+        # Create favorite
+        favorite = UserFavorite(
             user_id=current_user.id,
-            platform_id=data.platform_id,
-            url=data.url,
-            play_addr=data.play_addr,
-            cover_url=data.cover_url,
-            description=data.description,
-            stats=data.stats,
-            initial_stats=data.stats,
-            author_username=data.author_username,
-            author_followers=0,
-            uts_score=data.viral_score,
-            vertical="saved",
-            search_mode=DBSearchMode.KEYWORDS,
-            is_deep_scan=False,
+            trend_id=trend.id,
+            notes=data.notes,
+            tags=data.tags or []
         )
-        db.add(trend)
-        db.flush()
-
-    # Check if already favorited
-    existing_fav = db.query(UserFavorite).filter(
-        UserFavorite.user_id == current_user.id,
-        UserFavorite.trend_id == trend.id
-    ).first()
-
-    if existing_fav:
+        db.add(favorite)
         db.commit()
+
+        logger.info(f"⭐ User {current_user.id} saved video {data.platform_id} to favorites")
+
         return {
-            "id": existing_fav.id,
+            "id": favorite.id,
             "trend_id": trend.id,
-            "message": "Already saved"
+            "message": "Video saved!"
         }
-
-    # Create favorite
-    favorite = UserFavorite(
-        user_id=current_user.id,
-        trend_id=trend.id,
-        notes=data.notes,
-        tags=data.tags or []
-    )
-    db.add(favorite)
-    db.commit()
-
-    logger.info(f"⭐ User {current_user.id} saved video {data.platform_id} to favorites")
-
-    return {
-        "id": favorite.id,
-        "trend_id": trend.id,
-        "message": "Video saved!"
-    }
+    except Exception as e:
+        db.rollback()
+        logger.error(f"❌ save-video failed for user {current_user.id}: {type(e).__name__}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to save video: {str(e)}")
