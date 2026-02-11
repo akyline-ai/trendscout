@@ -13,7 +13,6 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from pydantic import BaseModel
 
 from ..core.database import get_db
 from ..db.models import Competitor, ProfileData, User
@@ -21,6 +20,8 @@ from ..services.collector import TikTokCollector
 from ..services.instagram_collector import InstagramCollector
 from ..services.instagram_profile_adapter import adapt_instagram_profile_to_posts
 from ..services.scorer import TrendScorer
+from ..services.apify_storage import ApifyStorage
+from ..services.storage import SupabaseStorage
 from .dependencies import get_current_user, check_rate_limit, CreditManager
 from .schemas.competitors import (
     CompetitorCreate,
@@ -48,11 +49,23 @@ router = APIRouter()
 # =============================================================================
 
 def fix_tt_url(url: str) -> Optional[str]:
-    """Fix TikTok image URLs for compatibility."""
+    """
+    Fix TikTok CDN URLs by removing expiring signatures.
+
+    Calls ApifyStorage.fix_tiktok_url() to remove -sign- subdomain and
+    signature parameters (x-expires, x-signature) from TikTok CDN URLs.
+    Also handles .heic to .jpeg conversion for compatibility.
+    """
     if not url or not isinstance(url, str):
         return None
-    if ".heic" in url:
-        return url.replace(".heic", ".jpeg")
+
+    # Remove TikTok signatures first
+    url = ApifyStorage.fix_tiktok_url(url)
+
+    # Convert .heic to .jpeg for compatibility
+    if url and ".heic" in url:
+        url = url.replace(".heic", ".jpeg")
+
     return url
 
 
@@ -94,26 +107,29 @@ def normalize_video_data(item: dict) -> dict:
         item.get("videoUrl")
     )
 
-    # DEBUG: Print cover extraction
+    # DEBUG: Log cover extraction issues
     if not cover:
-        print(f"⚠️ WARNING: No cover found for video {item.get('id')}")
-        print(f"  - video_obj keys: {list(video_obj.keys())[:10] if video_obj else 'empty'}")
-        print(f"  - video.cover: {video_obj.get('cover', 'missing')[:50] if video_obj.get('cover') else 'null'}")
+        logger.debug(f"No cover found for video {item.get('id')}")
+        logger.debug(f"video_obj keys: {list(video_obj.keys())[:10] if video_obj else 'empty'}")
+        logger.debug(f"video.cover: {video_obj.get('cover', 'missing')[:50] if video_obj.get('cover') else 'null'}")
 
-    # Upload thumbnail to Supabase Storage (images only, not videos)
+    # Upload thumbnail to Supabase Storage (permanent, no expiration)
+    # Fallback: if Supabase fails, use fix_tiktok_url (works ~1-3 days)
     cover_url_final = cover
     if cover:
         uploaded_cover = SupabaseStorage.upload_thumbnail(cover)
         if uploaded_cover:
             cover_url_final = uploaded_cover
         else:
-            logger.warning(f"Failed to upload thumbnail for video {item.get('id')}, using original URL")
+            # Fallback: remove TikTok signatures (temporary fix)
+            cover_url_final = ApifyStorage.fix_tiktok_url(cover)
 
     return {
         "id": str(item.get("id")),
         "title": item.get("title") or item.get("desc") or "",
         "url": item.get("postPage") or item.get("webVideoUrl") or item.get("url"),
         "cover_url": cover_url_final,
+        "thumbnail_url": cover_url_final,  # Frontend expects this field
         "video_url": video_url,
         "uploaded_at": uploaded_at,
         "views": int(views),
@@ -307,49 +323,10 @@ async def add_competitor(
 
     logger.info(f"🔍 User {current_user.id} adding competitor: @{clean_username}")
 
-    # Check if search_data was passed (optimization: skip Apify call)
-    if data.search_data:
-        logger.info(f"⚡ Using cached search data for @{clean_username} (no Apify call)")
-
-        # Use pre-fetched data from search
-        avatar_url = data.search_data.get("avatar") or data.search_data.get("avatar_url") or ""
-        followers_count = data.search_data.get("follower_count") or data.search_data.get("followers_count") or 0
-        video_count = data.search_data.get("video_count") or 0
-        display_name = data.search_data.get("nickname") or data.search_data.get("username") or clean_username
-
-        # Use original CDN URL - frontend will proxy it automatically
-
-        # Create competitor with minimal data (no videos yet)
-        competitor = Competitor(
-            user_id=current_user.id,
-            platform=data.platform,
-            username=clean_username,
-            display_name=display_name,
-            avatar_url=avatar_url,
-            bio="",
-            followers_count=followers_count,
-            total_videos=video_count,
-            avg_views=0,
-            engagement_rate=0,
-            posting_frequency=0.0,
-            recent_videos=[],
-            top_hashtags=[],
-            content_categories={},
-            is_active=True,
-            last_analyzed_at=datetime.utcnow(),
-            notes=data.notes,
-            tags=data.tags or []
-        )
-
-        db.add(competitor)
-        db.commit()
-        db.refresh(competitor)
-
-        logger.info(f"✅ User {current_user.id} added competitor @{clean_username} (fast mode)")
-        return CompetitorResponse.model_validate(competitor)
-
-    # Fallback: Fetch profile data from Apify (slower)
-    logger.info(f"📡 Fetching @{clean_username} from {data.platform} Apify (no cached data)")
+    # ALWAYS fetch full profile data with videos (30 videos) from Apify
+    # This ensures we have complete data immediately after adding competitor
+    # NO FAST MODE - always get full data to avoid double API calls
+    logger.info(f"📡 Fetching @{clean_username} from {data.platform} Apify with full video data")
 
     if data.platform == "instagram":
         # Instagram flow
@@ -416,8 +393,9 @@ async def add_competitor(
     first_vid = clean_videos[0]
     author_info = first_vid["author"]
 
-    # Use original CDN URL - frontend will proxy it automatically
-    avatar_url = author_info["avatar"]
+    # Upload avatar to Apify Storage
+    avatar_cdn_url = author_info["avatar"]
+    avatar_url = ApifyStorage.upload_avatar(avatar_cdn_url, clean_username, data.platform)
 
     # Create competitor record
     competitor = Competitor(
@@ -522,15 +500,15 @@ def update_competitor(
 @router.delete("/{username}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_competitor(
     username: str,
-    hard_delete: bool = False,
+    hard_delete: bool = True,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
     Remove competitor from tracking.
 
-    Default: Soft delete (sets is_active=False)
-    hard_delete=True: Permanently removes the record
+    Default: Hard delete (permanently removes the record)
+    hard_delete=False: Soft delete (sets is_active=False)
 
     User Isolation: Only deletes if competitor belongs to authenticated user.
     """
@@ -622,7 +600,10 @@ def refresh_competitor_data(
     # Update competitor
     first_vid = clean_videos[0]
     competitor.followers_count = first_vid["author"]["followers"]
-    competitor.avatar_url = first_vid["author"]["avatar"]
+
+    # Upload new avatar to Apify Storage
+    avatar_cdn_url = first_vid["author"]["avatar"]
+    competitor.avatar_url = ApifyStorage.upload_avatar(avatar_cdn_url, clean_username, competitor.platform)
     competitor.total_videos = len(clean_videos)
     competitor.avg_views = avg_views
     competitor.engagement_rate = round(engagement_rate, 2)
@@ -746,82 +727,14 @@ def get_competitor_feed(
     
     logger.info(f"📊 User {current_user.id} viewing feed for @{clean_username}")
 
-    # ALWAYS fetch fresh data because TikTok URLs expire quickly (signature becomes invalid)
-    # Even URLs that are only 20 minutes old return 403 failure-bad-signature
-    from datetime import datetime, timedelta
-    from app.services.collector import TikTokCollector
-
-    should_refresh = False
-    if competitor.last_analyzed_at:
-        minutes_since_check = (datetime.utcnow() - competitor.last_analyzed_at).total_seconds() / 60
-        # Refresh if data is older than 5 minutes (TikTok CDN signatures expire quickly)
-        if minutes_since_check > 5:
-            logger.warning(f"⚠️ Competitor @{clean_username} data is {minutes_since_check:.1f} minutes old - fetching fresh data")
-            should_refresh = True
-    else:
-        should_refresh = True
-
-    # Fetch fresh data synchronously so we return valid URLs
-    if should_refresh:
-        try:
-            from app.services.trend_scorer import TrendScorer
-            from app.api.utils import normalize_video_data
-
-            collector = TikTokCollector()
-            scorer = TrendScorer()
-
-            logger.info(f"🔄 Fetching fresh data from Apify for @{clean_username}...")
-            raw_videos = collector.collect([clean_username], limit=30, mode="profile")
-
-            if raw_videos:
-                # Process and update competitor data
-                clean_videos = []
-                total_views = 0
-                total_engagement = 0
-
-                for raw in raw_videos:
-                    vid = normalize_video_data(raw)
-                    scorer_data = {
-                        "views": vid["views"],
-                        "author_followers": vid["author"]["followers"],
-                        "collect_count": 0,
-                        "share_count": vid["stats"]["shareCount"]
-                    }
-                    vid["uts_score"] = scorer.calculate_uts(scorer_data, history_data=None, cascade_count=1)
-                    clean_videos.append(vid)
-                    total_views += vid["views"]
-                    total_engagement += vid["stats"]["diggCount"] + vid["stats"]["commentCount"]
-
-                # Update competitor in database
-                if clean_videos:
-                    author_info = clean_videos[0]["author"]
-                    avg_views = total_views / len(clean_videos) if clean_videos else 0
-                    engagement_rate = (total_engagement / total_views * 100) if total_views > 0 else 0
-
-                    competitor.display_name = author_info.get("username", clean_username)
-                    competitor.avatar_url = author_info.get("avatar", competitor.avatar_url)
-                    competitor.bio = author_info.get("bio", "")
-                    competitor.followers_count = author_info.get("followers", 0)
-                    competitor.total_videos = len(clean_videos)
-                    competitor.avg_views = avg_views
-                    competitor.engagement_rate = engagement_rate
-                    competitor.recent_videos = clean_videos
-                    competitor.last_analyzed_at = datetime.utcnow()
-
-                    db.commit()
-                    db.refresh(competitor)
-                    logger.info(f"✅ Fresh data fetched and updated for @{clean_username}: {len(clean_videos)} videos")
-            else:
-                logger.warning(f"No videos returned from Apify for @{clean_username}")
-        except Exception as e:
-            logger.error(f"Failed to fetch fresh data for @{clean_username}: {e}")
-            # Continue with stale data as fallback
+    # FEED ДОЛЖЕН ПОКАЗЫВАТЬ ДАННЫЕ ИЗ БАЗЫ МГНОВЕННО!
+    # Обновление данных через отдельный endpoint: PUT /competitors/{username}/refresh
 
     # Build profile data
     profile = CompetitorFeedProfile(
         username=competitor.username,
         nickname=competitor.display_name or competitor.username,
-        avatar_url=competitor.avatar_url,
+        avatar_url=ApifyStorage.fix_tiktok_url(competitor.avatar_url),
         bio=competitor.bio or "",
         followers_count=competitor.followers_count,
         total_videos=competitor.total_videos,
@@ -834,12 +747,8 @@ def get_competitor_feed(
     # Get videos from recent_videos field (JSONB)
     videos_data = competitor.recent_videos or []
 
-    # DEBUG: Check what's in recent_videos
-    logger.info(f"🔍 FEED DEBUG: recent_videos count = {len(videos_data)}")
-    if videos_data:
-        first = videos_data[0]
-        logger.info(f"🔍 FEED DEBUG: First video keys = {list(first.keys())}")
-        logger.info(f"🔍 FEED DEBUG: cover_url = {first.get('cover_url', 'MISSING')[:100] if first.get('cover_url') else 'None'}")
+    # Log summary
+    logger.info(f"Returning {len(videos_data)} videos for @{clean_username}")
 
     # Calculate cutoff time for "new" videos (last 24 hours)
     from datetime import datetime, timedelta
@@ -860,9 +769,15 @@ def get_competitor_feed(
             except:
                 is_new = False
         
-        # Format video data
+        # Format video data - fix ALL URLs from database
         cover_url_value = vid.get("cover_url")
-        logger.info(f"🔍 FEED VIDEO DEBUG: id={vid.get('id', 'NO_ID')[:20]}, cover_url={cover_url_value[:100] if cover_url_value else 'None'}")
+        cover_url_value = ApifyStorage.fix_tiktok_url(cover_url_value)
+        video_url_value = ApifyStorage.fix_tiktok_url(vid.get("video_url"))
+        page_url_value = ApifyStorage.fix_tiktok_url(vid.get("url"))
+        
+        # Fix author avatar from video metadata
+        if vid.get("author") and vid["author"].get("avatar"):
+            vid["author"]["avatar"] = ApifyStorage.fix_tiktok_url(vid["author"]["avatar"])
 
         feed_video = CompetitorFeedVideo(
             id=vid.get("id", ""),
@@ -881,33 +796,12 @@ def get_competitor_feed(
             uts_score=vid.get("uts_score", 0.0),
             is_new=is_new
         )
-
-        logger.info(f"🔍 FEED VIDEO OBJECT: thumbnail_url={feed_video.thumbnail_url[:100] if feed_video.thumbnail_url else 'None'}")
         feed_videos.append(feed_video)
     
-    logger.info(f"✅ Returned {len(feed_videos)} videos for @{clean_username} ({sum(1 for v in feed_videos if v.is_new)} new)")
+    new_videos_count = sum(1 for v in feed_videos if v.is_new)
+    logger.info(f"Returned {len(feed_videos)} videos for @{clean_username} ({new_videos_count} new)")
 
-    response = CompetitorFeedResponse(
+    return CompetitorFeedResponse(
         profile=profile,
         videos=feed_videos
     )
-
-    # DEBUG: Check final response
-    logger.info(f"🔍 FINAL RESPONSE: profile.avatar_url={response.profile.avatar_url[:100] if response.profile.avatar_url else 'None'}")
-    if response.videos:
-        logger.info(f"🔍 FINAL RESPONSE: first video thumbnail_url={response.videos[0].thumbnail_url[:100] if response.videos[0].thumbnail_url else 'None'}")
-        # Log the actual JSON dict to see what's being sent
-        import json
-        first_video_dict = response.videos[0].dict()
-        logger.info(f"🔍 FINAL RESPONSE JSON: first video = {json.dumps(first_video_dict, indent=2)[:500]}")
-
-        # Write to debug file
-        with open("/tmp/competitor_feed_debug.json", "w") as f:
-            json.dump({
-                "profile": response.profile.dict(),
-                "first_video": first_video_dict,
-                "total_videos": len(response.videos)
-            }, f, indent=2)
-        logger.info("📝 Wrote debug info to /tmp/competitor_feed_debug.json")
-
-    return response

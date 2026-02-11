@@ -1,5 +1,6 @@
 # backend/app/services/collector.py
 import os
+import asyncio
 from typing import List
 from apify_client import ApifyClient
 
@@ -109,3 +110,13 @@ class TikTokCollector:
         except Exception as exc:
             print(f"⚠️ Ошибка Apify: {exc}")
             return []
+
+    async def collect_async(self, targets: List[str], limit: int = 30, mode: str = "search", is_deep: bool = False):
+        """
+        Async обёртка над collect().
+        Запускает blocking Apify вызов в отдельном потоке,
+        чтобы не блокировать FastAPI event loop.
+
+        Остальные запросы продолжают обрабатываться пока Apify работает.
+        """
+        return await asyncio.to_thread(self.collect, targets, limit, mode, is_deep)

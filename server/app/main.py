@@ -37,6 +37,7 @@ from .api import trends, profiles, competitors, ai_scripts, proxy, favorites
 from .api.routes import auth, oauth, feedback, usage
 from .api import chat_sessions as chat_sessions_router
 from .api import workflows as workflows_router
+# Note: image_proxy removed - functionality merged into proxy.py
 
 # Background Scheduler
 from .services.scheduler import start_scheduler
@@ -135,8 +136,9 @@ ALLOWED_ORIGINS = [
     "https://*.pages.dev",
 ]
 
-# For development, allow all origins
-if os.getenv("ENVIRONMENT", "development") == "development":
+# For LOCAL development only — never on Railway/production
+# Railway always sets RAILWAY_ENVIRONMENT, so this only triggers on localhost
+if os.getenv("ENVIRONMENT", "development") == "development" and not os.getenv("RAILWAY_ENVIRONMENT"):
     ALLOWED_ORIGINS = ["*"]
 
 app.add_middleware(

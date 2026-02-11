@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { proxyImageUrl } from '@/utils/imageProxy';
 
 interface CompetitorVideo {
   id: string;
@@ -132,7 +133,7 @@ export function CompetitorVideoCard({ video, onSave, onGenerateScript }: Competi
           />
         ) : !imageError && video.thumbnail_url ? (
           <img
-            src={video.thumbnail_url}
+            src={proxyImageUrl(video.thumbnail_url)}
             alt={video.title}
             className={cn(
               "w-full h-full object-cover transition-transform duration-300",

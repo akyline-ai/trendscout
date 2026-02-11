@@ -1,16 +1,27 @@
 /**
  * Image Proxy Utility
  *
- * Wraps TikTok/Instagram CDN URLs in our backend proxy to bypass CORS restrictions.
+ * Wraps TikTok/Instagram CDN URLs in our backend proxy to bypass CORS and geo-restrictions.
  */
 
+// Get backend URL from environment or default to localhost
+const BACKEND_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
 /**
- * Wrap an image URL with a public image proxy to bypass CORS/referrer restrictions
+ * Check if URL is from geo-restricted TikTok CDN (EU/Asia)
+ */
+function isGeoRestrictedUrl(url: string): boolean {
+  return url.includes('tiktokcdn-eu.com') || url.includes('tos-alisg');
+}
+
+/**
+ * Wrap an image URL with our backend proxy to bypass CORS/geo-restrictions
  *
- * Using images.weserv.nl - a free, fast, and reliable image proxy service
+ * For geo-restricted URLs (EU/Asia CDN), uses our backend proxy with Apify residential IPs.
+ * For US CDN URLs, uses backend proxy for CORS bypass only (faster).
  *
  * @param url - Original CDN URL from TikTok/Instagram
- * @returns Proxied URL through images.weserv.nl
+ * @returns Proxied URL through our backend
  */
 export function proxyImageUrl(url: string | null | undefined): string {
   // If no URL, return placeholder
@@ -24,12 +35,14 @@ export function proxyImageUrl(url: string | null | undefined): string {
   }
 
   // If it's already proxied, return as is
-  if (url.includes('images.weserv.nl') || url.includes('/api/proxy/image')) {
+  if (url.includes('/proxy/image')) {
     return url;
   }
 
-  // Use images.weserv.nl proxy - it bypasses CORS and works with TikTok/Instagram
-  return `https://images.weserv.nl/?url=${encodeURIComponent(url)}`;
+  // Use our backend proxy - it handles both CORS and geo-restrictions
+  // Backend automatically uses Apify residential proxy for EU/Asia CDN
+  // Note: BACKEND_URL includes /api, so we add /proxy/image (not /api/proxy/image)
+  return `${BACKEND_URL}/proxy/image?url=${encodeURIComponent(url)}`;
 }
 
 /**

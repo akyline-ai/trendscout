@@ -8,8 +8,12 @@ from .config import settings
 # Добавляем connect_args для стабильности (опционально)
 engine = create_engine(
     settings.DATABASE_URL,
-    pool_pre_ping=True,  # Проверяет соединение перед запросом
-    echo=False           # Ставь True, если хочешь видеть SQL запросы в консоли
+    pool_pre_ping=True,      # Проверяет соединение перед запросом
+    pool_size=20,             # Базовый пул: 20 постоянных соединений
+    max_overflow=20,          # Дополнительно: ещё 20 при нагрузке (итого 40 макс)
+    pool_recycle=3600,        # Пересоздавать соединения каждый час (от stale connections)
+    pool_timeout=30,          # Ждать свободное соединение макс 30 сек
+    echo=False
 )
 
 # 2. Создаем фабрику сессий

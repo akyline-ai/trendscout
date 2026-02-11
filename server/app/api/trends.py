@@ -28,6 +28,7 @@ from ..services.ml_client import get_ml_client
 from ..services.clustering import cluster_trends_by_visuals
 from ..services.scheduler import scheduler, rescan_videos_task
 from ..services.storage import SupabaseStorage
+from ..services.apify_storage import ApifyStorage
 
 from .dependencies import (
     get_current_user,
@@ -103,13 +104,18 @@ def parse_video_data(item: dict, idx: int = 0) -> dict:
         cover_url = item.get("coverUrl") or item.get("cover") or item.get("videoCover") or ""
     cover_url = cover_url.replace(".heic", ".jpeg").replace(".webp", ".jpeg") if cover_url else ""
 
-    # Upload thumbnail to Supabase Storage (images only, not videos)
+    # Upload thumbnail to Supabase Storage (permanent, no expiration)
+    # Fallback: if Supabase fails, use fix_tiktok_url (works ~1-3 days)
     if cover_url:
+        video_id = str(item.get("id", "unknown"))
         uploaded_cover = SupabaseStorage.upload_thumbnail(cover_url)
         if uploaded_cover:
             cover_url = uploaded_cover
+            logger.info(f"✅ Thumbnail uploaded to Supabase for video {video_id[:20]}")
         else:
-            logger.warning(f"Failed to upload thumbnail for video {item.get('id')}, using original URL")
+            # Fallback: remove TikTok signatures (temporary fix)
+            cover_url = ApifyStorage.fix_tiktok_url(cover_url)
+            logger.warning(f"⚠️ Supabase upload failed, using fix_tiktok_url for {video_id[:20]}")
 
     # Video URL
     video_url = (
@@ -664,11 +670,16 @@ def search_trends(
                 )
                 db.add(new_trend)
                 processed_trends.append(new_trend)
-            db.commit()
 
         except Exception as e:
             logger.error(f"Error processing video {p_id}: {e}")
-            db.rollback()
+
+    # Batch commit — one transaction for all videos instead of one per video
+    try:
+        db.commit()
+    except Exception as e:
+        logger.error(f"Batch commit failed, rolling back: {e}")
+        db.rollback()
 
     # Clustering
     if req.is_deep and processed_trends:
