@@ -368,7 +368,7 @@ class ApiService {
     per_page: number;
     has_more: boolean;
   }> {
-    const response = await apiClient.get('/favorites', { params });
+    const response = await apiClient.get('/favorites/', { params });
     return response.data;
   }
 
@@ -381,7 +381,7 @@ class ApiService {
     notes?: string;
     tags?: string[];
   }): Promise<any> {
-    const response = await apiClient.post('/favorites', data);
+    const response = await apiClient.post('/favorites/', data);
     return response.data;
   }
 
@@ -465,7 +465,7 @@ class ApiService {
     per_page: number;
     has_more: boolean;
   }> {
-    const response = await apiClient.get('/competitors', { params });
+    const response = await apiClient.get('/competitors/', { params });
     return response.data;
   }
 
@@ -478,7 +478,7 @@ class ApiService {
     notes?: string;
     tags?: string[];
   }): Promise<any> {
-    const response = await apiClient.post('/competitors', data);
+    const response = await apiClient.post('/competitors/', data);
     return response.data;
   }
 
@@ -553,7 +553,7 @@ class ApiService {
       savings: number;
     };
   }> {
-    const response = await apiClient.get('/usage');
+    const response = await apiClient.get('/usage/');
     return response.data;
   }
 

@@ -49,6 +49,7 @@ from .services.scheduler import start_scheduler
 app = FastAPI(
     title="Rizko.ai API",
     version=settings.VERSION,
+    redirect_slashes=False,
     description="""
 ## TikTok Trend Analysis Platform
 
