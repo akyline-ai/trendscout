@@ -189,9 +189,9 @@ def search_channel(
                 preview_videos.append(SearchVideoPreview(
                     id=str(post.get("id", "")),
                     cover_url=post.get("displayUrl", ""),
-                    views=post.get("videoViewCount", 0),
-                    likes=post.get("likesCount", 0),
-                    duration=int(post.get("videoDuration", 0)),
+                    views=int(post.get("videoViewCount") or 0),
+                    likes=int(post.get("likesCount") or 0),
+                    duration=int(post.get("videoDuration") or 0),
                     url=post.get("url", ""),
                     play_addr=post.get("videoUrl", ""),
                 ))
@@ -245,12 +245,22 @@ def search_channel(
                 ""
             )
 
+            # Safe int extraction (0 is falsy, so "or" chains fail on 0)
+            def safe_int(val) -> int:
+                try:
+                    return int(val) if val is not None else 0
+                except (TypeError, ValueError):
+                    return 0
+
+            raw_views = raw.get("views") if raw.get("views") is not None else raw.get("playCount") if raw.get("playCount") is not None else (raw.get("stats") or {}).get("playCount", 0)
+            raw_likes = raw.get("likes") if raw.get("likes") is not None else raw.get("diggCount") if raw.get("diggCount") is not None else (raw.get("stats") or {}).get("diggCount", 0)
+
             preview_videos.append(SearchVideoPreview(
                 id=str(raw.get("id", "")),
                 cover_url=cover_final,
-                views=int(raw.get("views") or raw.get("playCount") or (raw.get("stats") or {}).get("playCount", 0)),
-                likes=int(raw.get("likes") or raw.get("diggCount") or (raw.get("stats") or {}).get("diggCount", 0)),
-                duration=int(video_obj.get("duration", 0)),
+                views=safe_int(raw_views),
+                likes=safe_int(raw_likes),
+                duration=safe_int(video_obj.get("duration")),
                 url=raw.get("postPage") or raw.get("webVideoUrl") or raw.get("url") or "",
                 play_addr=play_addr,
             ))
