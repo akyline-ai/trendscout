@@ -17,7 +17,6 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import JSONB
-# from pgvector.sqlalchemy import Vector  # Disabled for local dev
 import enum
 
 from ..core.database import Base
@@ -299,8 +298,6 @@ class Trend(Base):
 
     # AI Analysis
     ai_summary = Column(Text, nullable=True)
-    # embedding = Column(Vector(512), nullable=True)  # CLIP embedding - disabled for local dev
-
     # Search Context
     search_query = Column(String(255), nullable=True)  # Original search query
     search_mode = Column(SQLEnum(SearchMode), default=SearchMode.KEYWORDS)
