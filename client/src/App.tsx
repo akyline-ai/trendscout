@@ -81,20 +81,12 @@ function PWAInstallBanner() {
     console.log('[PWA Banner] State:', { isInstallable, isInstalled, updateAvailable });
   }, [isInstallable, isInstalled, updateAvailable]);
 
-  // Show offline toast
+  // Network status — logged silently, no toast spam
   useEffect(() => {
     if (isOffline) {
-      toast.warning('Вы офлайн', {
-        description: 'Некоторые функции могут быть недоступны',
-        icon: <WifiOff className="h-4 w-4" />,
-        duration: 5000,
-      });
-    } else if (!isOffline && network.type !== 'unknown') {
-      toast.success('Соединение восстановлено', {
-        description: `Подключено через ${network.type}`,
-        icon: <Wifi className="h-4 w-4" />,
-        duration: 3000,
-      });
+      console.warn('Network: offline');
+    } else if (network.type !== 'unknown') {
+      console.log('Network: online via', network.type);
     }
   }, [isOffline, network.type]);
 

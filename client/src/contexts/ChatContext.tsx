@@ -103,7 +103,6 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       setSessions(data);
     } catch (error) {
       console.error('Failed to load sessions:', error);
-      toast.error('Не удалось загрузить чат-сессии');
     } finally {
       setIsLoading(false);
     }
@@ -126,7 +125,6 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       });
     } catch (error) {
       console.error('Failed to load credits:', error);
-      toast.error('Не удалось загрузить информацию о кредитах');
     }
   }, [token]);
 
@@ -150,7 +148,6 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         return session.session_id;
       } catch (error) {
         console.error('Failed to create session:', error);
-        toast.error('Не удалось создать сессию');
         return null;
       }
     },
@@ -179,7 +176,6 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         );
       } catch (error) {
         console.error('Failed to load messages:', error);
-        toast.error('Не удалось загрузить сообщения');
       } finally {
         setIsLoading(false);
       }
@@ -204,7 +200,6 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         }
       } catch (error) {
         console.error('Failed to delete session:', error);
-        toast.error('Не удалось удалить сессию');
       }
     },
     [token, currentSessionId]
@@ -233,7 +228,6 @@ export function ChatProvider({ children }: { children: ReactNode }) {
           sessionId = session.session_id;
         } catch (error) {
           console.error('Failed to auto-create session:', error);
-          toast.error('Не удалось создать сессию чата');
           return;
         }
       }
@@ -321,7 +315,6 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         }
 
         console.error('Failed to send message:', error);
-        toast.error('Ошибка при отправке сообщения');
         setMessages((prev) => [
           ...prev,
           {

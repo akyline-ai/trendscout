@@ -132,7 +132,7 @@ export function CompetitorFeed() {
         toast.error(`Competitor @${username} not found`);
         navigate('/dashboard/competitors');
       } else {
-        toast.error('Failed to load competitor feed');
+        // silent fail
       }
     } finally {
       setIsLoading(false);

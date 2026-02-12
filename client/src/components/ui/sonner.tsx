@@ -13,7 +13,8 @@ const Toaster = ({ ...props }: ToasterProps) => {
       theme="dark"
       className="toaster group"
       position="bottom-center"
-      duration={4000}
+      duration={3000}
+      visibleToasts={2}
       richColors
       icons={{
         success: <CircleCheckIcon className="size-4" />,

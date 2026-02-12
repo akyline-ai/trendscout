@@ -29,6 +29,7 @@ from .schemas.competitors import (
     CompetitorResponse,
     CompetitorListResponse,
     ChannelSearchResult,
+    SearchVideoPreview,
     SpyModeResponse,
     ChannelData,
     CompetitorMetrics,
@@ -181,16 +182,34 @@ def search_channel(
         # Extract profile data (instagram-profile-scraper returns profile object)
         profile = raw_profiles[0]
 
+        # Build preview videos from latest posts
+        preview_videos = []
+        for post in (profile.get("latestPosts") or [])[:5]:
+            if post.get("type") == "Video":
+                preview_videos.append(SearchVideoPreview(
+                    id=str(post.get("id", "")),
+                    cover_url=post.get("displayUrl", ""),
+                    views=post.get("videoViewCount", 0),
+                    likes=post.get("likesCount", 0),
+                    duration=int(post.get("videoDuration", 0)),
+                    url=post.get("url", ""),
+                    play_addr=post.get("videoUrl", ""),
+                ))
+
         return ChannelSearchResult(
             username=profile.get("username", clean_username),
             nickname=profile.get("fullName", clean_username),
             avatar=profile.get("profilePicUrl", ""),
             follower_count=profile.get("followersCount", 0),
-            video_count=len(profile.get("latestPosts", [])),
-            platform="instagram"
+            following_count=profile.get("followingCount", 0),
+            video_count=profile.get("postsCount", len(profile.get("latestPosts", []))),
+            verified=profile.get("verified", False),
+            bio=profile.get("biography", ""),
+            platform="instagram",
+            preview_videos=preview_videos,
         )
     else:
-        # TikTok search (existing logic)
+        # TikTok search
         collector = TikTokCollector()
         raw_videos = collector.collect([clean_username], limit=5, mode="profile")
 
@@ -200,17 +219,57 @@ def search_channel(
                 detail=f"TikTok channel @{clean_username} not found"
             )
 
-        # Extract profile info from first video
-        first_vid = normalize_video_data(raw_videos[0])
-        author_info = first_vid["author"]
+        # Extract channel info from first raw item (before normalize strips it)
+        first_raw = raw_videos[0]
+        channel = first_raw.get("channel") or first_raw.get("authorMeta") or {}
+
+        # Build preview videos from raw data
+        preview_videos = []
+        for raw in raw_videos[:5]:
+            video_obj = raw.get("video") or {}
+            cover_raw = (
+                video_obj.get("cover") or
+                video_obj.get("coverUrl") or
+                raw.get("cover_url") or ""
+            )
+            # Search = fast preview only, no upload. Frontend uses /api/proxy/image
+            cover_final = fix_tt_url(cover_raw) or cover_raw
+
+            # Extract direct video playback URL (same logic as trends.py parse_video_data)
+            play_addr = (
+                video_obj.get("url") or
+                video_obj.get("playAddr") or
+                video_obj.get("downloadAddr") or
+                raw.get("videoUrl") or
+                raw.get("playAddr") or
+                ""
+            )
+
+            preview_videos.append(SearchVideoPreview(
+                id=str(raw.get("id", "")),
+                cover_url=cover_final,
+                views=int(raw.get("views") or raw.get("playCount") or (raw.get("stats") or {}).get("playCount", 0)),
+                likes=int(raw.get("likes") or raw.get("diggCount") or (raw.get("stats") or {}).get("diggCount", 0)),
+                duration=int(video_obj.get("duration", 0)),
+                url=raw.get("postPage") or raw.get("webVideoUrl") or raw.get("url") or "",
+                play_addr=play_addr,
+            ))
+
+        # Search = fast preview only, no upload
+        raw_avatar = channel.get("avatar") or channel.get("avatarThumb") or ""
+        avatar_final = fix_tt_url(raw_avatar) or raw_avatar
 
         return ChannelSearchResult(
-            username=clean_username,
-            nickname=author_info["username"],
-            avatar=author_info["avatar"] or "",
-            follower_count=author_info["followers"],
-            video_count=len(raw_videos),
-            platform="tiktok"
+            username=channel.get("username") or clean_username,
+            nickname=channel.get("name") or channel.get("username") or clean_username,
+            avatar=avatar_final,
+            follower_count=channel.get("followers") or channel.get("fans") or 0,
+            following_count=channel.get("following") or 0,
+            video_count=channel.get("videos") or len(raw_videos),
+            verified=channel.get("verified", False),
+            bio=channel.get("bio") or "",
+            platform="tiktok",
+            preview_videos=preview_videos,
         )
 
 

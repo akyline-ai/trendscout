@@ -94,14 +94,29 @@ class CompetitorUpdate(BaseModel):
 # SEARCH SCHEMAS
 # =============================================================================
 
+class SearchVideoPreview(BaseModel):
+    """Preview of a video in search results."""
+    id: str
+    cover_url: str = ""
+    views: int = 0
+    likes: int = 0
+    duration: int = 0  # seconds
+    url: str = ""
+    play_addr: str = ""  # Direct CDN video URL for inline playback
+
+
 class ChannelSearchResult(BaseModel):
     """Result from channel search (before adding)."""
     username: str
     nickname: str
     avatar: str
     follower_count: int
+    following_count: int = 0
     video_count: int
+    verified: bool = False
+    bio: str = ""
     platform: str = "tiktok"
+    preview_videos: List[SearchVideoPreview] = []
 
 
 # =============================================================================

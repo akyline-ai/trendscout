@@ -1,13 +1,20 @@
 import { useState, useEffect } from 'react';
-import { Users, UserPlus, Search, Loader2 } from 'lucide-react';
+import { Users, UserPlus, Search, Loader2, Eye, Heart, MessageCircle, Share2, Play, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 import type { Competitor } from '@/types';
 import { toast } from 'sonner';
 import { apiClient } from '@/services/api';
-import { proxyAvatarUrl } from '@/utils/imageProxy';
+import { proxyAvatarUrl, proxyThumbnailUrl } from '@/utils/imageProxy';
+
+const formatNumber = (num: number): string => {
+  if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
+  if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
+  return num.toString();
+};
 
 interface CompetitorCardProps {
   competitor: Competitor;
@@ -16,12 +23,6 @@ interface CompetitorCardProps {
 }
 
 function CompetitorCard({ competitor, onRemove, onViewDetails }: CompetitorCardProps) {
-  const formatNumber = (num: number): string => {
-    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
-    if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
-    return num.toString();
-  };
-
   const formatTimeAgo = (dateString: string): string => {
     const date = new Date(dateString);
     const now = new Date();
@@ -34,7 +35,6 @@ function CompetitorCard({ competitor, onRemove, onViewDetails }: CompetitorCardP
     return `${Math.floor(diffHours / 24)}d ago`;
   };
 
-  // Mock: check if competitor has new videos (you'll get this from backend later)
   const hasNewVideos = competitor.lastActivity &&
     new Date(competitor.lastActivity).getTime() > Date.now() - 24 * 60 * 60 * 1000;
 
@@ -43,7 +43,6 @@ function CompetitorCard({ competitor, onRemove, onViewDetails }: CompetitorCardP
       className="group hover:shadow-lg hover:border-purple-600/50 transition-all duration-300 cursor-pointer relative overflow-hidden"
       onClick={() => onViewDetails(competitor)}
     >
-      {/* New Videos Indicator */}
       {hasNewVideos && (
         <div className="absolute top-2 right-2 z-10">
           <Badge className="bg-red-500 text-white text-xs animate-pulse">
@@ -53,7 +52,6 @@ function CompetitorCard({ competitor, onRemove, onViewDetails }: CompetitorCardP
       )}
 
       <CardContent className="p-4">
-        {/* Avatar + Username */}
         <div className="flex items-center gap-3 mb-3">
           <div className="relative flex-shrink-0">
             <img
@@ -65,7 +63,6 @@ function CompetitorCard({ competitor, onRemove, onViewDetails }: CompetitorCardP
                 target.src = '/placeholder-avatar.svg';
               }}
             />
-            {/* Platform badge */}
             <div className="absolute -bottom-0.5 -right-0.5 w-6 h-6 rounded-full bg-background border-2 border-background flex items-center justify-center">
               {competitor.platform === 'instagram' ? (
                 <span className="text-base">📸</span>
@@ -84,7 +81,6 @@ function CompetitorCard({ competitor, onRemove, onViewDetails }: CompetitorCardP
           </div>
         </div>
 
-        {/* Stats Grid */}
         <div className="grid grid-cols-3 gap-2 mb-3 text-xs">
           <div className="text-center p-2 bg-muted/50 rounded">
             <div className="font-bold text-sm">{formatNumber(competitor.followerCount)}</div>
@@ -100,7 +96,6 @@ function CompetitorCard({ competitor, onRemove, onViewDetails }: CompetitorCardP
           </div>
         </div>
 
-        {/* Status */}
         <div className="mb-3 p-2 bg-muted/30 rounded text-xs">
           {hasNewVideos ? (
             <div className="flex items-center gap-1 text-red-500 font-medium">
@@ -115,7 +110,6 @@ function CompetitorCard({ competitor, onRemove, onViewDetails }: CompetitorCardP
           )}
         </div>
 
-        {/* Actions */}
         <div className="flex gap-2">
           <Button
             variant="default"
@@ -155,6 +149,7 @@ export function Competitors() {
   const [isSearching, setIsSearching] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const [searchPlatform, setSearchPlatform] = useState<'tiktok' | 'instagram'>('tiktok');
+  const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
   const [_showFilters, _setShowFilters] = useState(false);
   const [_filterPlatform, _setFilterPlatform] = useState<'all' | 'tiktok' | 'instagram'>('all');
   const [_filterSort, _setFilterSort] = useState<'recent' | 'followers' | 'engagement'>('recent');
@@ -182,7 +177,6 @@ export function Competitors() {
       })));
     } catch (error) {
       console.error('Error loading competitors:', error);
-      toast.error('Failed to load competitors');
     } finally {
       setIsLoading(false);
     }
@@ -228,9 +222,7 @@ export function Competitors() {
     } catch (error: any) {
       console.error('Search error:', error);
       if (error.response?.status === 404) {
-        toast.error(`${searchPlatform === 'instagram' ? 'Instagram' : 'TikTok'} channel @${cleanUsername} not found`);
-      } else {
-        toast.error('Search failed. Try again.');
+        toast.error(`@${cleanUsername} not found`);
       }
       setSearchResults(null);
     } finally {
@@ -262,8 +254,6 @@ export function Competitors() {
       console.error('Add error:', error);
       if (error.response?.status === 400) {
         toast.error(`@${channel.username} already in your list`);
-      } else {
-        toast.error('Failed to add channel');
       }
     } finally {
       setIsAdding(false);
@@ -278,7 +268,6 @@ export function Competitors() {
       loadCompetitors(); // Обновить список
     } catch (error) {
       console.error('Remove error:', error);
-      toast.error('Failed to remove channel');
     }
   };
 
@@ -362,39 +351,213 @@ export function Competitors() {
 
         {/* Search Results */}
         {searchResults && (
-          <div className="mt-4 p-4 border rounded-lg bg-muted/50">
-            <p className="text-sm text-muted-foreground mb-3">Search Result:</p>
-            <div className="flex items-center gap-4">
-              <img
-                src={proxyAvatarUrl(searchResults.avatar)}
-                alt={searchResults.username}
-                className="h-12 w-12 rounded-full"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.src = '/placeholder-avatar.svg';
-                }}
-              />
-              <div className="flex-1">
-                <p className="font-semibold">@{searchResults.username}</p>
-                <p className="text-sm text-muted-foreground">
-                  {(searchResults.follower_count || 0).toLocaleString()} followers • 
-                  {searchResults.video_count || 0} videos
-                </p>
+          <div className="mt-4 border rounded-xl overflow-hidden bg-card">
+            {/* Profile Header */}
+            <div className="p-5">
+              <div className="flex items-start gap-4">
+                {/* Avatar */}
+                <div className="relative flex-shrink-0">
+                  <img
+                    src={proxyAvatarUrl(searchResults.avatar)}
+                    alt={searchResults.username}
+                    className="h-16 w-16 rounded-full object-cover ring-2 ring-purple-500/30"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = '/placeholder-avatar.svg';
+                    }}
+                  />
+                  {/* Platform badge */}
+                  <div className="absolute -bottom-0.5 -right-0.5 w-6 h-6 rounded-full bg-background border-2 border-background flex items-center justify-center">
+                    {searchResults.platform === 'instagram' ? (
+                      <span className="text-sm">📸</span>
+                    ) : (
+                      <svg className="w-3.5 h-3.5 text-purple-600" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
+                      </svg>
+                    )}
+                  </div>
+                </div>
+
+                {/* Name + Bio */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-bold text-lg truncate">{searchResults.nickname || searchResults.username}</h3>
+                    {searchResults.verified && (
+                      <Badge variant="secondary" className="h-5 w-5 p-0 flex items-center justify-center bg-blue-500 text-white shrink-0">
+                        ✓
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-sm text-muted-foreground">@{searchResults.username}</p>
+                  {searchResults.bio && (
+                    <p className="text-sm text-muted-foreground mt-1.5 line-clamp-2">{searchResults.bio}</p>
+                  )}
+                </div>
               </div>
+
+              {/* Stats Grid */}
+              <div className="grid grid-cols-3 gap-3 mt-4">
+                <div className="text-center p-2.5 bg-muted/50 rounded-lg">
+                  <div className="font-bold text-base">{formatNumber(searchResults.follower_count || 0)}</div>
+                  <div className="text-xs text-muted-foreground">Followers</div>
+                </div>
+                <div className="text-center p-2.5 bg-muted/50 rounded-lg">
+                  <div className="font-bold text-base">{formatNumber(searchResults.video_count || 0)}</div>
+                  <div className="text-xs text-muted-foreground">Videos</div>
+                </div>
+                <div className="text-center p-2.5 bg-muted/50 rounded-lg">
+                  <div className="font-bold text-base">{formatNumber(searchResults.following_count || 0)}</div>
+                  <div className="text-xs text-muted-foreground">Following</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Preview Videos — each as VideoCard style */}
+            {searchResults.preview_videos && searchResults.preview_videos.length > 0 && (
+              <div className="px-5 pb-4">
+                <p className="text-xs text-muted-foreground mb-3 font-medium uppercase tracking-wide">Recent Videos</p>
+                <div className="grid grid-cols-5 gap-3">
+                  {searchResults.preview_videos.map((video: any) => {
+                    const isPlaying = playingVideoId === video.id;
+                    return (
+                    <Card
+                      key={video.id}
+                      className={cn(
+                        'group relative overflow-hidden transition-all duration-300 hover:shadow-2xl hover:scale-[1.02] cursor-pointer border-2',
+                        'hover:border-purple-500/40 w-full'
+                      )}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (!isPlaying && video.play_addr) {
+                          setPlayingVideoId(video.id);
+                        }
+                      }}
+                    >
+                      {/* Thumbnail — aspect-[9/16] like VideoCard */}
+                      <div className="relative aspect-[9/16] overflow-hidden bg-gradient-to-br from-gray-800 to-gray-900">
+                        {isPlaying && video.play_addr ? (
+                          /* HTML5 Video Player — same as VideoCard */
+                          <video
+                            src={video.play_addr}
+                            className="w-full h-full object-cover"
+                            controls
+                            autoPlay
+                            playsInline
+                            onEnded={() => setPlayingVideoId(null)}
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        ) : video.cover_url ? (
+                          <img
+                            src={proxyThumbnailUrl(video.cover_url)}
+                            alt=""
+                            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.src = '/placeholder-video.svg';
+                            }}
+                          />
+                        ) : (
+                          <div className="h-full w-full flex items-center justify-center text-gray-500">
+                            <Play className="h-12 w-12" />
+                          </div>
+                        )}
+
+                        {/* Overlay — only show when not playing, same as VideoCard */}
+                        {!isPlaying && (
+                        <div className={cn(
+                          'absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent transition-opacity duration-300',
+                          'opacity-60 group-hover:opacity-100'
+                        )}>
+                          {/* Play Button center */}
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div className={cn(
+                              'rounded-full bg-white/90 flex items-center justify-center transition-all duration-300 shadow-lg',
+                              'w-10 h-10 group-hover:w-12 group-hover:h-12 group-hover:scale-110'
+                            )}>
+                              <Play className="h-5 w-5 text-black fill-black ml-0.5 group-hover:h-6 group-hover:w-6" />
+                            </div>
+                          </div>
+
+                          {/* Duration — bottom right */}
+                          {video.duration > 0 && (
+                            <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
+                              {video.duration}s
+                            </div>
+                          )}
+
+                          {/* Open in TikTok — top right on hover */}
+                          {video.url && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="absolute top-2 right-2 h-7 w-7 bg-black/50 hover:bg-black/70 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                window.open(video.url, '_blank');
+                              }}
+                            >
+                              <ExternalLink className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                        </div>
+                        )}
+                      </div>
+
+                      {/* Content — same layout as VideoCard */}
+                      <CardContent className="p-2 space-y-1.5">
+                        {/* Author */}
+                        <div className="flex items-center gap-1.5">
+                          <img
+                            src={proxyAvatarUrl(searchResults.avatar)}
+                            alt={searchResults.username}
+                            className="h-6 w-6 rounded-full object-cover ring-1 ring-purple-500/30"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.src = '/placeholder-avatar.svg';
+                            }}
+                          />
+                          <span className="text-xs font-semibold truncate hover:text-purple-600 transition-colors">
+                            @{searchResults.username}
+                          </span>
+                        </div>
+
+                        {/* Stats — 2-col grid like VideoCard */}
+                        <div className="pt-1 border-t">
+                          <div className="grid grid-cols-2 gap-1 text-[11px]">
+                            <div className="flex items-center gap-0.5 text-purple-600 dark:text-purple-400 font-medium">
+                              <Eye className="h-3 w-3" />
+                              <span>{formatNumber(video.views || 0)}</span>
+                            </div>
+                            <div className="flex items-center gap-0.5 text-pink-600 dark:text-pink-400 font-medium">
+                              <Heart className="h-3 w-3" />
+                              <span>{formatNumber(video.likes || 0)}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Add Button */}
+            <div className="px-5 pb-5">
               <Button
                 onClick={() => handleAddChannel(searchResults)}
                 disabled={isAdding}
-                className="bg-gradient-to-r from-purple-600 to-pink-600"
+                className="w-full h-11 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 font-semibold"
               >
                 {isAdding ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Adding...
+                    Adding @{searchResults.username}...
                   </>
                 ) : (
                   <>
                     <UserPlus className="h-4 w-4 mr-2" />
-                    Add
+                    Add to Competitors
                   </>
                 )}
               </Button>
@@ -424,7 +587,7 @@ export function Competitors() {
           </div>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredCompetitors.map((competitor) => (
             <CompetitorCard
               key={competitor.id}

@@ -123,7 +123,7 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
         return data;
       } catch (error) {
         console.error('Failed to create workflow:', error);
-        toast.error('Failed to create workflow');
+        console.error('Failed to create workflow');
         return null;
       }
     },
@@ -143,7 +143,7 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
         setIsDirty(false);
       } catch (error) {
         console.error('Failed to load workflow:', error);
-        toast.error('Failed to load workflow');
+        console.error('Failed to load workflow');
       } finally {
         setIsLoading(false);
       }
@@ -196,7 +196,7 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
         );
       } catch (error) {
         console.error('Failed to save workflow:', error);
-        toast.error('Failed to save workflow');
+        console.error('Failed to save workflow');
       }
     },
     [token, currentWorkflow, loadWorkflows]
@@ -227,7 +227,7 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
         toast.success('Workflow deleted');
       } catch (error) {
         console.error('Failed to delete workflow:', error);
-        toast.error('Failed to delete workflow');
+        console.error('Failed to delete workflow');
       }
     },
     [token, currentWorkflow]
@@ -247,7 +247,7 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
         toast.success('Workflow duplicated');
       } catch (error) {
         console.error('Failed to duplicate workflow:', error);
-        toast.error('Failed to duplicate workflow');
+        console.error('Failed to duplicate workflow');
       }
     },
     [token, loadWorkflows]

@@ -87,7 +87,7 @@ export function Saved() {
       setPage(pageNum);
     } catch (error) {
       console.error('Failed to load favorites:', error);
-      toast.error('Failed to load saved videos');
+      // silent fail
     } finally {
       setLoading(false);
     }

@@ -212,7 +212,7 @@ export function SettingsPage() {
       setUsageData(data);
     } catch (error: any) {
       console.error('Failed to load usage data:', error);
-      toast.error('Failed to load usage statistics');
+      // silent fail
     } finally {
       setLoading(false);
     }

@@ -157,7 +157,7 @@ export function Dashboard() {
       }
     } catch (error) {
       console.error('Error loading dashboard:', error);
-      toast.error('Failed to load dashboard data');
+      // silent fail — page shows empty state
     } finally {
       setIsLoading(false);
     }
@@ -177,7 +177,7 @@ export function Dashboard() {
         await loadDashboardData();
       }
     } catch (error) {
-      toast.error('Failed to sync account');
+      console.error('Failed to sync account');
     } finally {
       setIsSyncing(false);
     }
@@ -195,7 +195,7 @@ export function Dashboard() {
         await loadDashboardData();
       }
     } catch (error) {
-      toast.error('Failed to add demo account');
+      console.error('Failed to add demo account');
     } finally {
       setIsAddingDemo(false);
     }
