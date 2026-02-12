@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { motion } from 'framer-motion';
-import { Download, RefreshCw, WifiOff, Wifi } from 'lucide-react';
+import { Download, RefreshCw } from 'lucide-react';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { ChatProvider } from '@/contexts/ChatContext';
@@ -38,7 +38,6 @@ import { Saved } from '@/pages/Saved';
 import { MyVideosPage } from '@/pages/MyVideos';
 import { OAuthCallback } from '@/pages/OAuthCallback';
 import { Toaster } from '@/components/ui/sonner';
-import { toast } from 'sonner';
 import { DevAccessGate } from '@/components/DevAccessGate';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { Button } from '@/components/ui/button';
