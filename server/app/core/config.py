@@ -6,8 +6,8 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "Rizko.ai API"
     VERSION: str = "2.0.0"
     
-    # База данных
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://user:password@localhost/trendscout_db")
+    # Database (Supabase PostgreSQL — no local DB)
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "")
     
     # Ключи API
     APIFY_API_TOKEN: str = os.getenv("APIFY_API_TOKEN", "")
