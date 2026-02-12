@@ -122,29 +122,12 @@ async def api_key_middleware(request: Request, call_next):
     return await call_next(request)
 
 
-# CORS - Production-ready configuration
-ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://localhost:5173",
-    "http://127.0.0.1:3000",
-    "http://127.0.0.1:5173",
-    "https://rizko.ai",
-    "https://www.rizko.ai",
-    "https://app.rizko.ai",
-    "https://beta.rizko.ai",
-    # Add Cloudflare Pages domains
-    "https://*.pages.dev",
-]
-
-# For LOCAL development only — never on Railway/production
-# Railway always sets RAILWAY_ENVIRONMENT, so this only triggers on localhost
-if os.getenv("ENVIRONMENT", "development") == "development" and not os.getenv("RAILWAY_ENVIRONMENT"):
-    ALLOWED_ORIGINS = ["*"]
-
+# CORS — allow all origins (credentials are handled via JWT, not cookies)
+# This prevents CORS errors on 500 responses and simplifies Cloudflare Pages deploys
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS,
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,  # "*" + credentials=True is invalid per spec
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["*"],
     expose_headers=["X-Request-ID", "X-RateLimit-Remaining", "X-RateLimit-Reset"],
@@ -178,18 +161,24 @@ async def log_requests(request: Request, call_next):
     return response
 
 
-# Global exception handler
+# Global exception handler — includes CORS headers so browsers see the error
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
-    """Catch all unhandled exceptions and return proper JSON response."""
+    """Catch all unhandled exceptions and return proper JSON response with CORS."""
     logger.error(f"Unhandled exception: {exc}", exc_info=True)
 
+    origin = request.headers.get("origin", "*")
     return JSONResponse(
         status_code=500,
         content={
             "error": "Internal server error",
             "detail": str(exc) if os.getenv("ENVIRONMENT") == "development" else "An unexpected error occurred",
             "path": str(request.url.path)
+        },
+        headers={
+            "Access-Control-Allow-Origin": origin,
+            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+            "Access-Control-Allow-Headers": "*",
         }
     )
 

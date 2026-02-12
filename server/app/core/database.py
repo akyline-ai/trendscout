@@ -3,17 +3,19 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker, declarative_base
 from .config import settings
 
-# 1. Создаем движок (Engine)
-# Используем URL из настроек.
-# Добавляем connect_args для стабильности (опционально)
+# Supabase Transaction Pooler (port 6543) uses PgBouncer.
+# statement_timeout prevents hung queries.
 engine = create_engine(
     settings.DATABASE_URL,
-    pool_pre_ping=True,      # Проверяет соединение перед запросом
-    pool_size=20,             # Базовый пул: 20 постоянных соединений
-    max_overflow=20,          # Дополнительно: ещё 20 при нагрузке (итого 40 макс)
-    pool_recycle=3600,        # Пересоздавать соединения каждый час (от stale connections)
-    pool_timeout=30,          # Ждать свободное соединение макс 30 сек
-    echo=False
+    pool_pre_ping=True,
+    pool_size=20,
+    max_overflow=20,
+    pool_recycle=3600,
+    pool_timeout=30,
+    echo=False,
+    connect_args={
+        "options": "-c statement_timeout=30000",
+    }
 )
 
 # 2. Создаем фабрику сессий
