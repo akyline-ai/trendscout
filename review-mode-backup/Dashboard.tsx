@@ -29,6 +29,8 @@ import { accountsApi, type Account, type VideoData, type DashboardStats } from '
 import { getAllPlatforms } from '@/constants/platforms';
 import type { Platform } from '@/types';
 import { toast } from 'sonner';
+import { REVIEW_MODE } from '@/config/features';
+
 // AI Insights (mock for now — would come from AI service)
 const AI_INSIGHTS = [
   {
@@ -243,6 +245,91 @@ export function Dashboard() {
       color: 'from-orange-500 to-amber-500',
     },
   ] : [];
+
+  // ===== REVIEW MODE DASHBOARD =====
+  if (REVIEW_MODE) {
+    const connectedCount = 0;
+    const totalPlatforms = 7;
+
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-muted-foreground">
+            Your personal analytics hub with AI-powered insights
+          </p>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <Card className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                <Link2 className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Connected</p>
+                <p className="text-2xl font-bold">{connectedCount} / {totalPlatforms}</p>
+              </div>
+            </div>
+          </Card>
+          <Card className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                <Users className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Followers</p>
+                <p className="text-2xl font-bold">—</p>
+              </div>
+            </div>
+          </Card>
+          <Card className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                <Eye className="h-6 w-6 text-green-600 dark:text-green-400" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Total Views</p>
+                <p className="text-2xl font-bold">—</p>
+              </div>
+            </div>
+          </Card>
+          <Card className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                <Video className="h-6 w-6 text-red-600 dark:text-red-400" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Videos</p>
+                <p className="text-2xl font-bold">—</p>
+              </div>
+            </div>
+          </Card>
+        </div>
+
+        <Card className="p-8">
+          <div className="text-center max-w-lg mx-auto">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+              <Link2 className="h-8 w-8 text-purple-600 dark:text-purple-400" />
+            </div>
+            <h2 className="text-2xl font-bold mb-2">Get Started</h2>
+            <p className="text-muted-foreground mb-6">
+              Connect your TikTok, Instagram, or YouTube account to unlock personalized AI insights and detailed analytics.
+            </p>
+            <Button
+              size="lg"
+              className="bg-black hover:bg-gray-800 text-white gap-2"
+              onClick={() => navigate('/dashboard/connect-accounts')}
+            >
+              <Plus className="h-5 w-5" />
+              Connect Your First Account
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+  // ===== END REVIEW MODE =====
 
   // Loading state
   if (isLoading) {

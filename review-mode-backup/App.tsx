@@ -8,6 +8,7 @@ import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { ChatProvider } from '@/contexts/ChatContext';
 import { WorkflowProvider } from '@/contexts/WorkflowContext';
+import { LandingPage } from '@/pages/LandingPage';
 import LoginPage from '@/pages/LoginPage';
 import RegisterPage from '@/pages/RegisterPage';
 import { Header } from '@/components/Header';
@@ -27,6 +28,9 @@ import { SettingsPage } from '@/pages/Settings';
 import { Help } from '@/pages/Help';
 import { Pricing } from '@/pages/Pricing';
 import { UsagePolicy } from '@/pages/UsagePolicy';
+import { PrivacyPolicy } from '@/pages/PrivacyPolicy';
+import { TermsOfService } from '@/pages/TermsOfService';
+import { DataPolicy } from '@/pages/DataPolicy';
 import { DataDeletion } from '@/pages/DataDeletion';
 import { Marketplace } from '@/pages/Marketplace';
 import { Feedback } from '@/pages/Feedback';
@@ -34,7 +38,7 @@ import { Saved } from '@/pages/Saved';
 import { MyVideosPage } from '@/pages/MyVideos';
 import { OAuthCallback } from '@/pages/OAuthCallback';
 import { Toaster } from '@/components/ui/sonner';
-
+import { DevAccessGate } from '@/components/DevAccessGate';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { Button } from '@/components/ui/button';
 import { usePWA, useHaptic, useNetworkStatus } from '@/hooks/usePWA';
@@ -70,9 +74,6 @@ function PWAInstallBanner() {
   const { isInstallable, isInstalled, install, isOffline, updateAvailable, updateServiceWorker } = usePWA();
   const network = useNetworkStatus();
   const haptic = useHaptic();
-  const [dismissed, setDismissed] = useState(() => {
-    return sessionStorage.getItem('pwa-banner-dismissed') === 'true';
-  });
 
   // Debug log
   useEffect(() => {
@@ -115,34 +116,18 @@ function PWAInstallBanner() {
     );
   }
 
-  // Dismiss handler
-  const handleDismiss = () => {
-    setDismissed(true);
-    sessionStorage.setItem('pwa-banner-dismissed', 'true');
-  };
-
   // Show install banner
-  if (isInstallable && !isInstalled && !dismissed) {
+  if (isInstallable && !isInstalled) {
     // Detect iOS for special instructions
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 
     return (
       <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-80 z-[100] bg-card border rounded-xl shadow-2xl p-4">
-        {/* Close button */}
-        <button
-          onClick={handleDismiss}
-          className="absolute top-2 right-2 p-1 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-          aria-label="Закрыть"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
         <div className="flex items-start gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold text-sm shrink-0">
             R
           </div>
-          <div className="flex-1 min-w-0 pr-4">
+          <div className="flex-1 min-w-0">
             <h3 className="font-semibold text-sm">Установить Rizko.ai</h3>
             <p className="text-xs text-muted-foreground mt-1">
               {isIOS
@@ -230,6 +215,7 @@ function DashboardLayout() {
                 <Route path="/help" element={<Help />} />
                 <Route path="/pricing" element={<Pricing />} />
                 <Route path="/usage-policy" element={<UsagePolicy />} />
+                <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                 <Route path="/data-deletion" element={<DataDeletion />} />
                 <Route path="/marketplace" element={<Marketplace />} />
                 <Route path="/feedback" element={<Feedback />} />
@@ -260,51 +246,56 @@ const queryClient = new QueryClient({
 function App() {
   return (
     <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
-          <ThemeProvider>
-            <AuthProvider>
-              <ChatProvider>
-                <WorkflowProvider>
-                  {/* PWA Install Banner */}
-                  <PWAInstallBanner />
+      <DevAccessGate>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <ThemeProvider>
+              <AuthProvider>
+                <ChatProvider>
+                  <WorkflowProvider>
+                {/* PWA Install Banner */}
+                <PWAInstallBanner />
 
-                  <Routes>
-                    {/* Public routes */}
-                    <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                    <Route path="/login" element={<LoginPage />} />
-                    <Route path="/register" element={<RegisterPage />} />
-                    <Route path="/oauth/callback" element={<OAuthCallback />} />
+              <Routes>
+              {/* Public routes */}
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
+              <Route path="/oauth/callback" element={<OAuthCallback />} />
 
-                    {/* Public support pages */}
-                    <Route path="/help" element={<Help />} />
+            {/* Public legal & support pages */}
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/terms-of-service" element={<TermsOfService />} />
+            <Route path="/data-policy" element={<DataPolicy />} />
+            <Route path="/help" element={<Help />} />
 
-                    {/* Protected dashboard routes */}
-                    <Route
-                      path="/dashboard/*"
-                      element={
-                        <ProtectedRoute>
-                          <DashboardLayout />
-                        </ProtectedRoute>
-                      }
-                    />
+            {/* Protected dashboard routes */}
+            <Route
+              path="/dashboard/*"
+              element={
+                <ProtectedRoute>
+                  <DashboardLayout />
+                </ProtectedRoute>
+              }
+            />
 
-                    {/* 404 catch all */}
-                    <Route path="*" element={<Navigate to="/dashboard" replace />} />
-                  </Routes>
-                </WorkflowProvider>
-              </ChatProvider>
-            </AuthProvider>
-          </ThemeProvider>
+            {/* 404 catch all */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+          </WorkflowProvider>
+                </ChatProvider>
+          </AuthProvider>
+        </ThemeProvider>
 
-          {/* Global Toast Notifications */}
-          <Toaster />
-        </BrowserRouter>
+        {/* Global Toast Notifications */}
+        <Toaster />
+      </BrowserRouter>
 
-        {/* React Query DevTools - только в development */}
-        <ReactQueryDevtools initialIsOpen={false} />
-      </QueryClientProvider>
-    </ErrorBoundary>
+      {/* React Query DevTools - только в development */}
+      <ReactQueryDevtools initialIsOpen={false} />
+    </QueryClientProvider>
+    </DevAccessGate>
+  </ErrorBoundary>
   );
 }
 

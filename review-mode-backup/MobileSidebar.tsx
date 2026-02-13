@@ -27,7 +27,7 @@ import {
 } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
-
+import { REVIEW_MODE } from '@/config/features';
 
 interface MobileSidebarProps {
   open: boolean;
@@ -56,18 +56,26 @@ const mainNavItems: NavItem[] = [
 ];
 
 // Tools section
-const toolsNavItems: NavItem[] = [
-  { title: 'Trending Now', href: '/dashboard/trending', icon: TrendingUp, badge: 'NEW' },
-  { title: 'Discover Videos', href: '/dashboard/discover', icon: Search },
-  { title: 'Deep Analysis', href: '/dashboard/analytics', icon: BarChart3 },
-  { title: 'Saved', href: '/dashboard/saved', icon: Bookmark },
-  { title: 'Competitors', href: '/dashboard/competitors', icon: Users },
-];
+const toolsNavItems: NavItem[] = REVIEW_MODE
+  ? [
+      { title: 'Trending Now', href: '/dashboard/trending', icon: TrendingUp, badge: 'NEW' },
+      { title: 'Discover Videos', href: '/dashboard/discover', icon: Search },
+      { title: 'Saved', href: '/dashboard/saved', icon: Bookmark },
+    ]
+  : [
+      { title: 'Trending Now', href: '/dashboard/trending', icon: TrendingUp, badge: 'NEW' },
+      { title: 'Discover Videos', href: '/dashboard/discover', icon: Search },
+      { title: 'Deep Analysis', href: '/dashboard/analytics', icon: BarChart3 },
+      { title: 'Saved', href: '/dashboard/saved', icon: Bookmark },
+      { title: 'Competitors', href: '/dashboard/competitors', icon: Users },
+    ];
 
-// AI Tools section
-const aiNavItems: NavItem[] = [
-  { title: 'AI Scripts', href: '/dashboard/ai-scripts', icon: Sparkles, badge: 'AI' },
-];
+// AI Tools section (only outside Review Mode)
+const aiNavItems: NavItem[] = REVIEW_MODE
+  ? []
+  : [
+      { title: 'AI Scripts', href: '/dashboard/ai-scripts', icon: Sparkles, badge: 'AI' },
+    ];
 
 // Support items
 const supportNavItems: NavItem[] = [
@@ -283,14 +291,16 @@ export function MobileSidebar({ open, onClose }: MobileSidebarProps) {
               <div className="border-t border-border/30 my-1" />
 
               {/* Upgrade Plan */}
-              <NavLink
-                to="/dashboard/pricing"
-                className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-secondary/50 transition-all rounded-lg mx-1"
-                onClick={handleNavClick}
-              >
-                <ArrowUpCircle className="h-4 w-4 text-muted-foreground" />
-                <span>Upgrade Plan</span>
-              </NavLink>
+              {!REVIEW_MODE && (
+                <NavLink
+                  to="/dashboard/pricing"
+                  className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-secondary/50 transition-all rounded-lg mx-1"
+                  onClick={handleNavClick}
+                >
+                  <ArrowUpCircle className="h-4 w-4 text-muted-foreground" />
+                  <span>Upgrade Plan</span>
+                </NavLink>
+              )}
 
               <div className="border-t border-border/30 my-1" />
 

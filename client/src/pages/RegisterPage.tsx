@@ -17,6 +17,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useOnlineStatus } from '@/hooks/useFormValidation';
 import { PasswordStrength } from '@/components/PasswordStrength';
 
+const LANDING_URL = import.meta.env.VITE_LANDING_URL || 'https://rizko.ai';
+
 const RegisterPage = () => {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -363,9 +365,9 @@ const RegisterPage = () => {
             </div>
 
             <div className="mt-6 text-center">
-              <Link to="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-2">
+              <a href={LANDING_URL} className="text-sm text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-2">
                 ← Back to home
-              </Link>
+              </a>
             </div>
           </div>
         </motion.div>

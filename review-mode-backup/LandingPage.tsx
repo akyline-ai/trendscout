@@ -15,12 +15,38 @@ import {
   Quote,
   Sun,
   Moon,
+  Link2,
+  LineChart,
 } from 'lucide-react';
 import Hero3D from '@/components/3d/Hero3D';
 import { useTheme } from '@/contexts/ThemeContext';
 import { cn } from '@/lib/utils';
+import { REVIEW_MODE } from '@/config/features';
 
-const features = [
+// Features for REVIEW_MODE (Official API only)
+const reviewModeFeatures = [
+  {
+    icon: Link2,
+    title: 'Connect Your Accounts',
+    description: 'Securely link your TikTok, Instagram, and YouTube accounts using official OAuth authentication.',
+    color: '#8b5cf6',
+  },
+  {
+    icon: LineChart,
+    title: 'Personal Analytics',
+    description: 'View detailed statistics for all your videos including views, likes, comments, and engagement rates.',
+    color: '#3b82f6',
+  },
+  {
+    icon: Bot,
+    title: 'AI-Powered Insights',
+    description: 'Get personalized recommendations powered by Gemini AI to improve your content strategy and grow your audience.',
+    color: '#10b981',
+  },
+];
+
+// Features for full version
+const fullFeatures = [
   {
     icon: TrendingUp,
     title: 'AI Trend Detection',
@@ -59,7 +85,35 @@ const features = [
   },
 ];
 
-const plans = [
+const features = REVIEW_MODE ? reviewModeFeatures : fullFeatures;
+
+// Plans for REVIEW_MODE (simpler, focused on analytics)
+const reviewModePlans = [
+  {
+    name: 'Free',
+    price: 0,
+    description: 'Get started with basic analytics',
+    features: ['Connect 1 social account', 'View video statistics', 'Basic performance insights', 'Community support'],
+    highlighted: false,
+  },
+  {
+    name: 'Creator',
+    price: 9,
+    description: 'For growing creators',
+    features: ['Connect up to 3 accounts', 'Full video analytics', 'AI-powered recommendations', 'Email support'],
+    highlighted: true,
+  },
+  {
+    name: 'Pro',
+    price: 29,
+    description: 'For serious creators',
+    features: ['Unlimited accounts', 'Advanced AI insights', 'Historical data analysis', 'Priority support'],
+    highlighted: false,
+  },
+];
+
+// Plans for full version
+const fullPlans = [
   {
     name: 'Starter',
     price: 19,
@@ -83,7 +137,35 @@ const plans = [
   },
 ];
 
-const testimonials = [
+const plans = REVIEW_MODE ? reviewModePlans : fullPlans;
+
+// Testimonials for REVIEW_MODE
+const reviewModeTestimonials = [
+  {
+    name: 'Alex Kim',
+    role: 'TikTok Creator',
+    followers: '150K',
+    content: 'Finally, a simple way to see all my analytics in one place! The AI insights helped me understand what content works best.',
+    avatar: 'AK',
+  },
+  {
+    name: 'Jessica Taylor',
+    role: 'Instagram Influencer',
+    followers: '320K',
+    content: 'Connecting my accounts was super easy and secure. Love seeing my performance across all platforms!',
+    avatar: 'JT',
+  },
+  {
+    name: 'David Chen',
+    role: 'YouTube Creator',
+    followers: '75K',
+    content: 'The personalized recommendations have really helped me improve my content strategy. Great tool for any creator!',
+    avatar: 'DC',
+  },
+];
+
+// Testimonials for full version
+const fullTestimonials = [
   {
     name: 'Sarah Chen',
     role: 'Content Creator',
@@ -106,6 +188,8 @@ const testimonials = [
     avatar: 'ER',
   },
 ];
+
+const testimonials = REVIEW_MODE ? reviewModeTestimonials : fullTestimonials;
 
 export function LandingPage() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -145,9 +229,15 @@ export function LandingPage() {
               <a href="#pricing" className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
                 Pricing
               </a>
-              <a href="#testimonials" className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
-                Testimonials
-              </a>
+              {REVIEW_MODE ? (
+                <Link to="/help" className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+                  Support
+                </Link>
+              ) : (
+                <a href="#testimonials" className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+                  Testimonials
+                </a>
+              )}
             </nav>
 
             {/* Actions */}
@@ -172,13 +262,13 @@ export function LandingPage() {
                 to="/login"
                 className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
               >
-                Login
+                {REVIEW_MODE ? 'Sign In' : 'Login'}
               </Link>
               <Link
                 to="/login"
                 className="px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 text-white text-sm font-medium hover:opacity-90 transition-opacity"
               >
-                Get Started
+                {REVIEW_MODE ? 'Get Started' : 'Get Started'}
               </Link>
             </div>
           </div>
@@ -203,8 +293,17 @@ export function LandingPage() {
             >
               {/* Badge */}
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 mb-6">
-                <Sparkles className="w-4 h-4 text-blue-500" />
-                <span className="text-sm font-medium text-blue-600 dark:text-blue-400">AI-Powered Content Intelligence</span>
+                {REVIEW_MODE ? (
+                  <>
+                    <BarChart3 className="w-4 h-4 text-blue-500" />
+                    <span className="text-sm font-medium text-blue-600 dark:text-blue-400">Social Media Analytics Platform</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4 text-blue-500" />
+                    <span className="text-sm font-medium text-blue-600 dark:text-blue-400">AI-Powered Content Intelligence</span>
+                  </>
+                )}
               </div>
 
               {/* Title */}
@@ -212,11 +311,22 @@ export function LandingPage() {
                 "text-4xl md:text-5xl lg:text-6xl font-bold leading-tight",
                 "text-gray-900 dark:text-white"
               )}>
-                Go Viral with{' '}
-                <span className="bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
-                  AI-Powered
-                </span>{' '}
-                Analytics
+                {REVIEW_MODE ? (
+                  <>
+                    Track Your Content{' '}
+                    <span className="bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
+                      Performance
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    Go Viral with{' '}
+                    <span className="bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
+                      AI-Powered
+                    </span>{' '}
+                    Analytics
+                  </>
+                )}
               </h1>
 
               {/* Description */}
@@ -224,7 +334,9 @@ export function LandingPage() {
                 "mt-6 text-lg max-w-xl",
                 "text-gray-600 dark:text-gray-400"
               )}>
-                Discover trending content, generate viral scripts, and analyze competitors with the most advanced AI tools for content creators.
+                {REVIEW_MODE
+                  ? 'Securely connect your social accounts using official APIs. View detailed analytics and get personalized recommendations to grow your audience.'
+                  : 'Discover trending content, generate viral scripts, and analyze competitors with the most advanced AI tools for content creators.'}
               </p>
 
               {/* CTA Buttons */}
@@ -233,40 +345,57 @@ export function LandingPage() {
                   to="/login"
                   className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 text-white font-medium hover:opacity-90 transition-all hover:scale-105"
                 >
-                  Start Free Trial
+                  {REVIEW_MODE ? 'Get Started Free' : 'Start Free Trial'}
                   <ArrowRight className="w-5 h-5" />
                 </Link>
                 <a
                   href="#features"
                   className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white font-medium hover:bg-gray-200 dark:hover:bg-gray-700 transition-all"
                 >
-                  Learn More
+                  {REVIEW_MODE ? 'How It Works' : 'Learn More'}
                 </a>
               </div>
 
               {/* Trust Badges */}
-              <div className="mt-12 flex items-center gap-6">
-                <div className="flex -space-x-2">
-                  {[1, 2, 3, 4].map((i) => (
-                    <div
-                      key={i}
-                      className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 border-2 border-white dark:border-gray-900 flex items-center justify-center text-white text-xs font-bold"
-                    >
-                      {String.fromCharCode(64 + i)}
-                    </div>
-                  ))}
+              {REVIEW_MODE ? (
+                <div className="mt-12 flex flex-wrap items-center gap-6 text-sm text-gray-600 dark:text-gray-400">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">🔒</span>
+                    <span>Secure OAuth</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">📈</span>
+                    <span>Real-time Stats</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">🤖</span>
+                    <span>AI Insights</span>
+                  </div>
                 </div>
-                <div>
-                  <div className="flex items-center gap-1">
-                    {[1, 2, 3, 4, 5].map((i) => (
-                      <Star key={i} className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+              ) : (
+                <div className="mt-12 flex items-center gap-6">
+                  <div className="flex -space-x-2">
+                    {[1, 2, 3, 4].map((i) => (
+                      <div
+                        key={i}
+                        className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 border-2 border-white dark:border-gray-900 flex items-center justify-center text-white text-xs font-bold"
+                      >
+                        {String.fromCharCode(64 + i)}
+                      </div>
                     ))}
                   </div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                    <span className="font-semibold text-gray-900 dark:text-white">2,500+</span> creators trust Rizko.ai
-                  </p>
+                  <div>
+                    <div className="flex items-center gap-1">
+                      {[1, 2, 3, 4, 5].map((i) => (
+                        <Star key={i} className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                      ))}
+                    </div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                      <span className="font-semibold text-gray-900 dark:text-white">2,500+</span> creators trust Rizko.ai
+                    </p>
+                  </div>
                 </div>
-              </div>
+              )}
             </motion.div>
 
             {/* Right - 3D Orbital Ring */}
@@ -295,10 +424,12 @@ export function LandingPage() {
             className="text-center mb-16"
           >
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
-              Everything You Need to Go Viral
+              {REVIEW_MODE ? 'How Rizko.ai Works' : 'Everything You Need to Go Viral'}
             </h2>
             <p className="mt-4 text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-              Powerful AI tools designed to help content creators identify trends, create engaging content, and grow their audience.
+              {REVIEW_MODE
+                ? 'Connect your accounts, view your analytics, and get AI-powered recommendations - all in one place.'
+                : 'Powerful AI tools designed to help content creators identify trends, create engaging content, and grow their audience.'}
             </p>
           </motion.div>
 
@@ -422,10 +553,12 @@ export function LandingPage() {
             className="text-center mb-16"
           >
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
-              Loved by Creators Worldwide
+              {REVIEW_MODE ? 'What Creators Say' : 'Loved by Creators Worldwide'}
             </h2>
             <p className="mt-4 text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-              Join thousands of content creators who have transformed their growth with Rizko.ai.
+              {REVIEW_MODE
+                ? 'Hear from creators who use Rizko.ai to track their content performance.'
+                : 'Join thousands of content creators who have transformed their growth with Rizko.ai.'}
             </p>
           </motion.div>
 
@@ -470,21 +603,25 @@ export function LandingPage() {
             transition={{ duration: 0.8 }}
           >
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-              Ready to Go Viral?
+              {REVIEW_MODE ? 'Ready to Grow Your Audience?' : 'Ready to Go Viral?'}
             </h2>
             <p className="text-lg text-white/80 mb-8 max-w-2xl mx-auto">
-              Join thousands of creators who are already using Rizko.ai to discover trends, create viral content, and grow their audience.
+              {REVIEW_MODE
+                ? 'Connect your social accounts and get AI-powered insights to improve your content strategy.'
+                : 'Join thousands of creators who are already using Rizko.ai to discover trends, create viral content, and grow their audience.'}
             </p>
             <Link
               to="/login"
               className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-white text-blue-600 font-semibold hover:bg-gray-100 transition-all hover:scale-105"
             >
-              Start Your Free Trial
+              {REVIEW_MODE ? 'Get Started Free' : 'Start Your Free Trial'}
               <ArrowRight className="w-5 h-5" />
             </Link>
-            <p className="mt-4 text-sm text-white/60">
-              No credit card required. 14-day free trial.
-            </p>
+            {!REVIEW_MODE && (
+              <p className="mt-4 text-sm text-white/60">
+                No credit card required. 14-day free trial.
+              </p>
+            )}
           </motion.div>
         </div>
       </section>
@@ -507,7 +644,9 @@ export function LandingPage() {
                 <span className="font-bold text-lg text-gray-900 dark:text-white">Rizko.ai</span>
               </div>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                AI-powered analytics platform for content creators. Discover trends, generate scripts, and grow your audience.
+                {REVIEW_MODE
+                  ? 'Social media analytics platform. Connect your accounts and get personalized insights.'
+                  : 'AI-powered analytics platform for content creators. Discover trends, generate scripts, and grow your audience.'}
               </p>
             </div>
             <div>
@@ -515,7 +654,9 @@ export function LandingPage() {
               <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
                 <li><a href="#features" className="hover:text-gray-900 dark:hover:text-white transition-colors">Features</a></li>
                 <li><a href="#pricing" className="hover:text-gray-900 dark:hover:text-white transition-colors">Pricing</a></li>
-                <li><a href="#" className="hover:text-gray-900 dark:hover:text-white transition-colors">API</a></li>
+                {!REVIEW_MODE && (
+                  <li><a href="#" className="hover:text-gray-900 dark:hover:text-white transition-colors">API</a></li>
+                )}
               </ul>
             </div>
             <div>

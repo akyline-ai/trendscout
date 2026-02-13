@@ -29,77 +29,79 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { ComingSoonModal } from '@/components/ComingSoonModal';
-import { features } from '@/config/features';
-
-const LANDING_URL = import.meta.env.VITE_LANDING_URL || 'https://rizko.ai';
+import { features, REVIEW_MODE } from '@/config/features';
 
 interface UnifiedSidebarProps {
   variant: 'A' | 'B';
 }
 
+// Dynamic navigation items based on REVIEW_MODE
 const getTrendsNavItems = () => {
   const items = [
     {
       title: 'Dashboard',
       href: '/dashboard',
       icon: LayoutDashboard,
-      show: true,
+      show: true, // Always show
     },
     {
       title: 'My Videos',
       href: '/dashboard/my-videos',
       icon: Video,
-      show: features.myVideos,
+      show: features.myVideos, // Always show - Official API
     },
     {
       title: 'Connect Accounts',
       href: '/dashboard/connect-accounts',
       icon: LinkIcon,
-      show: features.tiktokOAuth,
+      show: features.tiktokOAuth, // Always show - OAuth
     },
     {
       title: 'Trending Now',
       href: '/dashboard/trending',
       icon: TrendingUp,
       badge: 'NEW',
-      show: features.trending,
+      show: features.trending, // Hidden in Review Mode
     },
     {
       title: 'Discover Videos',
       href: '/dashboard/discover',
       icon: Search,
-      show: features.trendDiscovery,
+      show: features.trendDiscovery, // Hidden in Review Mode
     },
     {
       title: 'Deep Analysis',
       href: '/dashboard/analytics',
       icon: BarChart3,
-      show: features.deepAnalysis,
+      show: features.deepAnalysis, // Hidden in Review Mode
     },
     {
       title: 'Saved',
       href: '/dashboard/saved',
       icon: Bookmark,
-      show: true,
+      show: !REVIEW_MODE, // Hidden in Review Mode
     },
     {
       title: 'Competitors',
       href: '/dashboard/competitors',
       icon: Users,
-      show: features.competitors,
+      show: features.competitors, // Hidden in Review Mode
     },
     {
       title: 'Feedback',
       href: '/dashboard/feedback',
       icon: MessageSquare,
-      show: true,
+      show: true, // Always show
     },
   ];
 
   return items.filter(item => item.show);
 };
 
+// Dynamic coming soon items based on REVIEW_MODE
 const getComingSoonItems = () => {
+  if (REVIEW_MODE) return []; // Hide all in Review Mode
+
   return [
     {
       title: 'Publish Hub',
@@ -184,39 +186,41 @@ export function UnifiedSidebar({ variant }: UnifiedSidebarProps) {
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="p-2 border-b">
-        <div className="flex bg-muted rounded-lg p-1">
-          <button
-            onClick={() => {
-              setActiveTab('trends');
-              navigate('/dashboard');
-            }}
-            className={cn(
-              'flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-all',
-              activeTab === 'trends'
-                ? 'bg-background text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
-            )}
-          >
-            Trends
-          </button>
-          <button
-            onClick={() => {
-              setActiveTab('scripts');
-              navigate('/dashboard/ai-scripts');
-            }}
-            className={cn(
-              'flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-all',
-              activeTab === 'scripts'
-                ? 'bg-background text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
-            )}
-          >
-            Scripts
-          </button>
+      {/* Tabs - Hide Scripts tab in Review Mode */}
+      {!REVIEW_MODE ? (
+        <div className="p-2 border-b">
+          <div className="flex bg-muted rounded-lg p-1">
+            <button
+              onClick={() => {
+                setActiveTab('trends');
+                navigate('/dashboard');
+              }}
+              className={cn(
+                'flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-all',
+                activeTab === 'trends'
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              Trends
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab('scripts');
+                navigate('/dashboard/ai-scripts');
+              }}
+              className={cn(
+                'flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-all',
+                activeTab === 'scripts'
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              Scripts
+            </button>
+          </div>
         </div>
-      </div>
+      ) : null}
 
       {/* Content based on active tab */}
       <div className="flex-1 overflow-y-auto">
@@ -429,45 +433,48 @@ export function UnifiedSidebar({ variant }: UnifiedSidebarProps) {
               <span>Settings</span>
             </NavLink>
 
-            <div className="relative">
-              <button
-                className="w-full flex items-center justify-between px-4 py-2.5 text-sm hover:bg-accent transition-all"
-                onClick={() => setShowLanguageMenu(!showLanguageMenu)}
-              >
-                <div className="flex items-center gap-3">
-                  <Globe className="h-4 w-4 text-muted-foreground" />
-                  <span>Language</span>
-                </div>
-                <ChevronRight
-                  className={cn(
-                    'h-4 w-4 text-muted-foreground transition-transform',
-                    showLanguageMenu && 'rotate-90'
-                  )}
-                />
-              </button>
+            {/* Language - Hidden in Review Mode */}
+            {!REVIEW_MODE && (
+              <div className="relative">
+                <button
+                  className="w-full flex items-center justify-between px-4 py-2.5 text-sm hover:bg-accent transition-all"
+                  onClick={() => setShowLanguageMenu(!showLanguageMenu)}
+                >
+                  <div className="flex items-center gap-3">
+                    <Globe className="h-4 w-4 text-muted-foreground" />
+                    <span>Language</span>
+                  </div>
+                  <ChevronRight
+                    className={cn(
+                      'h-4 w-4 text-muted-foreground transition-transform',
+                      showLanguageMenu && 'rotate-90'
+                    )}
+                  />
+                </button>
 
-              {showLanguageMenu && (
-                <div className="absolute left-full top-0 ml-1 bg-popover border rounded-lg shadow-xl py-1 min-w-[140px] z-50">
-                  {['English', 'Russian', 'Spanish'].map((lang) => (
-                    <button
-                      key={lang}
-                      className={cn(
-                        'w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-accent transition-all',
-                        currentLanguage === lang && 'text-purple-500'
-                      )}
-                      onClick={() => {
-                        setCurrentLanguage(lang);
-                        setShowLanguageMenu(false);
-                        setShowUserMenu(false);
-                      }}
-                    >
-                      {currentLanguage === lang && <span className="text-purple-500">•</span>}
-                      <span>{lang === 'Russian' ? 'Русский' : lang === 'Spanish' ? 'Español' : lang}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+                {showLanguageMenu && (
+                  <div className="absolute left-full top-0 ml-1 bg-popover border rounded-lg shadow-xl py-1 min-w-[140px] z-50">
+                    {['English', 'Russian', 'Spanish'].map((lang) => (
+                      <button
+                        key={lang}
+                        className={cn(
+                          'w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-accent transition-all',
+                          currentLanguage === lang && 'text-purple-500'
+                        )}
+                        onClick={() => {
+                          setCurrentLanguage(lang);
+                          setShowLanguageMenu(false);
+                          setShowUserMenu(false);
+                        }}
+                      >
+                        {currentLanguage === lang && <span className="text-purple-500">•</span>}
+                        <span>{lang === 'Russian' ? 'Русский' : lang === 'Spanish' ? 'Español' : lang}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
             <NavLink
               to="/dashboard/help"
@@ -478,18 +485,24 @@ export function UnifiedSidebar({ variant }: UnifiedSidebarProps) {
               <span>Get help</span>
             </NavLink>
 
-            <div className="border-t my-1" />
-            <button
-              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-accent transition-all"
-              onClick={() => {
-                setShowUserMenu(false);
-                navigate('/dashboard/pricing');
-              }}
-            >
-              <ArrowUpCircle className="h-4 w-4 text-muted-foreground" />
-              <span>Upgrade plan</span>
-            </button>
+            {/* Upgrade plan - Hidden in Review Mode */}
+            {!REVIEW_MODE && (
+              <>
+                <div className="border-t my-1" />
+                <button
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-accent transition-all"
+                  onClick={() => {
+                    setShowUserMenu(false);
+                    navigate('/dashboard/pricing');
+                  }}
+                >
+                  <ArrowUpCircle className="h-4 w-4 text-muted-foreground" />
+                  <span>Upgrade plan</span>
+                </button>
+              </>
+            )}
 
+            {/* Learn more - Show only Privacy/Usage in Review Mode */}
             <div className="relative">
               <button
                 className="w-full flex items-center justify-between px-4 py-2.5 text-sm hover:bg-accent transition-all"
@@ -509,16 +522,19 @@ export function UnifiedSidebar({ variant }: UnifiedSidebarProps) {
 
               {showLearnMoreMenu && (
                 <div className="absolute left-full top-0 ml-1 bg-popover border rounded-lg shadow-xl py-1 min-w-[180px] z-50">
-                  <NavLink
-                    to="/about"
-                    className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-accent transition-all"
-                    onClick={() => {
-                      setShowLearnMoreMenu(false);
-                      setShowUserMenu(false);
-                    }}
-                  >
-                    About
-                  </NavLink>
+                  {/* About - Hidden in Review Mode */}
+                  {!REVIEW_MODE && (
+                    <NavLink
+                      to="/about"
+                      className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-accent transition-all"
+                      onClick={() => {
+                        setShowLearnMoreMenu(false);
+                        setShowUserMenu(false);
+                      }}
+                    >
+                      About
+                    </NavLink>
+                  )}
                   <NavLink
                     to="/dashboard/usage-policy"
                     className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-accent transition-all"
@@ -529,10 +545,8 @@ export function UnifiedSidebar({ variant }: UnifiedSidebarProps) {
                   >
                     Usage policy
                   </NavLink>
-                  <a
-                    href={`${LANDING_URL}/privacy-policy`}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <NavLink
+                    to="/dashboard/privacy-policy"
                     className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-accent transition-all"
                     onClick={() => {
                       setShowLearnMoreMenu(false);
@@ -540,7 +554,7 @@ export function UnifiedSidebar({ variant }: UnifiedSidebarProps) {
                     }}
                   >
                     Privacy policy
-                  </a>
+                  </NavLink>
                 </div>
               )}
             </div>

@@ -27,11 +27,20 @@ server/build/
 # Client (Frontend)
 client/node_modules/
 client/.env
+client/.env.local
 client/dist/
 client/build/
 client/.vite/
 client/.next/
 client/coverage/
+
+# Landing (Marketing site)
+landing/node_modules/
+landing/.env
+landing/.env.local
+landing/dist/
+landing/build/
+landing/.vite/
 
 # ML Service
 ml-service/venv/
@@ -66,3 +75,7 @@ API_REVIEW_ROADMAP.md
 
 # Claude AI skills (local context)
 .claude/
+
+# Apify testing files (NOT part of project - standalone testing only)
+apify-actor-comparison.html
+APIFY_ACTORS_GUIDE.md

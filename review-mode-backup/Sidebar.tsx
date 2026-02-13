@@ -21,7 +21,7 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useState } from 'react';
-
+import { REVIEW_MODE } from '@/config/features';
 
 interface NavItem {
   title: string;
@@ -46,44 +46,65 @@ const mainNavItems: NavItem[] = [
 ];
 
 // Tools section
-const toolsNavItems: NavItem[] = [
-  {
-    title: 'Trending Now',
-    href: '/dashboard/trending',
-    icon: TrendingUp,
-    badge: 'NEW',
-  },
-  {
-    title: 'Discover Videos',
-    href: '/dashboard/discover',
-    icon: Search,
-  },
-  {
-    title: 'Deep Analysis',
-    href: '/dashboard/analytics',
-    icon: BarChart3,
-  },
-  {
-    title: 'Saved',
-    href: '/dashboard/saved',
-    icon: Bookmark,
-  },
-  {
-    title: 'Competitors',
-    href: '/dashboard/competitors',
-    icon: Users,
-  },
-];
+const toolsNavItems: NavItem[] = REVIEW_MODE
+  ? [
+      {
+        title: 'Trending Now',
+        href: '/dashboard/trending',
+        icon: TrendingUp,
+        badge: 'NEW',
+      },
+      {
+        title: 'Discover Videos',
+        href: '/dashboard/discover',
+        icon: Search,
+      },
+      {
+        title: 'Saved',
+        href: '/dashboard/saved',
+        icon: Bookmark,
+      },
+    ]
+  : [
+      {
+        title: 'Trending Now',
+        href: '/dashboard/trending',
+        icon: TrendingUp,
+        badge: 'NEW',
+      },
+      {
+        title: 'Discover Videos',
+        href: '/dashboard/discover',
+        icon: Search,
+      },
+      {
+        title: 'Deep Analysis',
+        href: '/dashboard/analytics',
+        icon: BarChart3,
+      },
+      {
+        title: 'Saved',
+        href: '/dashboard/saved',
+        icon: Bookmark,
+      },
+      {
+        title: 'Competitors',
+        href: '/dashboard/competitors',
+        icon: Users,
+      },
+    ];
 
-// AI Tools section
-const aiNavItems: NavItem[] = [
-  {
-    title: 'AI Scripts',
-    href: '/dashboard/ai-scripts',
-    icon: Sparkles,
-    badge: 'AI',
-  },
-];
+// AI Tools section (only outside Review Mode)
+const aiNavItems: NavItem[] = REVIEW_MODE
+  ? []
+  : [
+      {
+        title: 'AI Scripts',
+        href: '/dashboard/ai-scripts',
+        icon: Sparkles,
+        badge: 'AI',
+      },
+    ];
 
 // Support items
 const supportNavItems: NavItem[] = [
@@ -340,16 +361,18 @@ export function Sidebar() {
               <div className="border-t border-border/30 my-1" />
 
               {/* Upgrade Plan */}
-              <button
-                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-secondary/50 transition-all rounded-lg mx-1"
-                onClick={() => {
-                  setShowUserMenu(false);
-                  navigate('/dashboard/pricing');
-                }}
-              >
-                <ArrowUpCircle className="h-4 w-4 text-muted-foreground" />
-                <span>Upgrade Plan</span>
-              </button>
+              {!REVIEW_MODE && (
+                <button
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-secondary/50 transition-all rounded-lg mx-1"
+                  onClick={() => {
+                    setShowUserMenu(false);
+                    navigate('/dashboard/pricing');
+                  }}
+                >
+                  <ArrowUpCircle className="h-4 w-4 text-muted-foreground" />
+                  <span>Upgrade Plan</span>
+                </button>
+              )}
 
               <div className="border-t border-border/30 my-1" />
 

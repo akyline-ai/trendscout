@@ -55,7 +55,7 @@ import { useChat } from '@/contexts/ChatContext';
 import { useWorkflow } from '@/contexts/WorkflowContext';
 import { apiService } from '@/services/api';
 import { toast } from 'sonner';
-
+import { DevAccessGate } from '@/components/DevAccessGate';
 import { NodeConfigPanel } from '@/components/workflow/NodeConfigPanel';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -1304,8 +1304,8 @@ export function WorkflowBuilder() {
   // ModeIcon unused — mode selection is done via pills in header
 
   return (
-    <>
-    <div className="flex h-full bg-background">
+    <DevAccessGate>
+      <div className="flex h-full bg-background">
         {/* Left Sidebar - Collapsible */}
         <div className={cn(
           "bg-card border-r border-border flex flex-col flex-shrink-0 transition-all duration-300",
@@ -2991,6 +2991,6 @@ export function WorkflowBuilder() {
           </div>
         </div>
       )}
-    </>
+    </DevAccessGate>
   );
 }

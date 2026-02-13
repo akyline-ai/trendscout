@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import type { AIScript } from '@/types';
-
+import { DevAccessGate } from '@/components/DevAccessGate';
 
 // Mock data for demonstration
 const mockScripts: AIScript[] = [
@@ -232,7 +232,8 @@ export function AIScripts() {
   ];
 
   return (
-    <div className="space-y-6">
+    <DevAccessGate>
+      <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -443,5 +444,6 @@ export function AIScripts() {
         </TabsContent>
       </Tabs>
       </div>
+    </DevAccessGate>
   );
 }

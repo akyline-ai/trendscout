@@ -13,6 +13,8 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+
+const LANDING_URL = import.meta.env.VITE_LANDING_URL || 'https://rizko.ai';
 import { useOnlineStatus } from '@/hooks/useFormValidation';
 
 const LoginPage = () => {
@@ -330,9 +332,9 @@ const LoginPage = () => {
             </div>
 
             <div className="mt-6 text-center">
-              <Link to="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-2">
+              <a href={LANDING_URL} className="text-sm text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-2">
                 ← Back to home
-              </Link>
+              </a>
             </div>
           </div>
         </motion.div>
