@@ -75,7 +75,3 @@ API_REVIEW_ROADMAP.md
 
 # Claude AI skills (local context)
 .claude/
-
-# Apify testing files (NOT part of project - standalone testing only)
-apify-actor-comparison.html
-APIFY_ACTORS_GUIDE.md

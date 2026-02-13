@@ -16,21 +16,37 @@
 ## Architecture
 
 ```
-┌──────────────────────────────────────────────────────────┐
-│                     Frontend (React 19)                   │
-│              Vite 6 + TypeScript + Tailwind               │
-│                  Cloudflare Pages / :5173                  │
-└────────────────────────┬─────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                   rizko.ai (Landing)                         │
+│             Vite + React + Tailwind                          │
+│              Cloudflare Pages / :5174                         │
+└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│                 app.rizko.ai (Dashboard)                      │
+│           Vite + React 19 + TypeScript + Tailwind             │
+│              Cloudflare Pages / :5173                         │
+└────────────────────────┬────────────────────────────────────┘
                          │ REST API
-┌────────────────────────▼─────────────────────────────────┐
-│                  Backend (FastAPI + Python 3.11)           │
-│                    Railway / localhost:8000                │
-├───────────┬───────────┬───────────┬──────────────────────┤
-│  Supabase │   Apify   │  Claude/  │    Supabase          │
-│  Postgres │  Scraper  │  Gemini   │    Storage           │
-│  (DB)     │  (Data)   │  (AI)     │    (Images)          │
-└───────────┴───────────┴───────────┴──────────────────────┘
+┌────────────────────────▼────────────────────────────────────┐
+│                  Backend (FastAPI + Python 3.11)              │
+│                    Railway / localhost:8000                   │
+├───────────┬───────────┬───────────┬─────────────────────────┤
+│  Supabase │   Apify   │  Claude/  │    Supabase             │
+│  Postgres │  Scraper  │  Gemini   │    Storage              │
+│  (DB)     │  (Data)   │  (AI)     │    (Images)             │
+└───────────┴───────────┴───────────┴─────────────────────────┘
 ```
+
+### Domains
+
+| Domain | What | Folder | Deploy |
+|--------|------|--------|--------|
+| **rizko.ai** | Landing page (маркетинг, SEO) | `landing/` | Cloudflare Pages (`rizkoai`) |
+| **app.rizko.ai** | Dashboard (приложение) | `client/` | Cloudflare Pages (`apprizkoai`) |
+| **api.rizko.ai** | Backend API | `server/` | Railway |
+
+### Services
 
 | Service | What | Where |
 |---------|------|-------|
@@ -75,7 +91,7 @@ alembic upgrade head
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-### 3. Frontend (port 5173)
+### 3. Dashboard — app (port 5173)
 
 ```bash
 cd client
@@ -84,6 +100,21 @@ npm run dev
 ```
 
 Open: http://localhost:5173
+
+### 4. Landing page (port 5174)
+
+```bash
+cd landing
+npm install
+npm run dev
+```
+
+Open: http://localhost:5174
+
+> **Примечание:** Landing и Dashboard связаны через env-переменные.
+> В dev-режиме кнопки Login/Get Started на лендинге ведут на `localhost:5173`.
+> В production — на `https://app.rizko.ai`.
+> См. `landing/.env` и `landing/.env.production`.
 
 ---
 
@@ -119,13 +150,26 @@ API_SECRET_KEY=xxx
 DEV_UPGRADE_CODE=xxx
 ```
 
-### Frontend (`client/.env`)
+### Dashboard (`client/.env`)
 
 ```env
 VITE_API_URL=http://localhost:8000/api
 VITE_APP_NAME=Rizko.ai
 VITE_SUPABASE_URL=https://xxx.supabase.co
 VITE_SUPABASE_ANON_KEY=eyJ...
+VITE_LANDING_URL=http://localhost:5174
+```
+
+### Landing (`landing/.env`)
+
+```env
+VITE_APP_URL=http://localhost:5173
+```
+
+### Landing Production (`landing/.env.production`)
+
+```env
+VITE_APP_URL=https://app.rizko.ai
 ```
 
 ---
@@ -134,50 +178,65 @@ VITE_SUPABASE_ANON_KEY=eyJ...
 
 ```
 trendscout/
-├── client/                         # Frontend (React 19 + Vite 6)
+├── landing/                       # Landing page (rizko.ai)
 │   ├── src/
-│   │   ├── pages/                  # 28 pages (see Routes below)
-│   │   ├── components/ui/          # shadcn/ui components
-│   │   ├── contexts/               # AuthContext, ChatContext, WorkflowContext
-│   │   ├── hooks/                  # Custom hooks (useNetwork, usePWA, etc.)
-│   │   ├── services/api.ts         # Axios API client
-│   │   └── types/                  # TypeScript types
-│   └── package.json
+│   │   ├── App.tsx                # 3 routes: /, /privacy-policy, /terms-of-service
+│   │   ├── pages/
+│   │   │   ├── LandingPage.tsx    # Marketing hero, features, pricing, testimonials
+│   │   │   ├── PrivacyPolicy.tsx
+│   │   │   └── TermsOfService.tsx
+│   │   └── components/3d/         # 3D animated hero
+│   ├── public/                    # Logos, favicon
+│   ├── package.json
+│   └── vite.config.ts             # Port 5174
 │
-├── server/                         # Backend (FastAPI)
+├── client/                        # Dashboard app (app.rizko.ai)
+│   ├── src/
+│   │   ├── pages/                 # Dashboard, Trending, Discover, AI Scripts, etc.
+│   │   ├── components/ui/         # shadcn/ui components
+│   │   ├── contexts/              # AuthContext, ChatContext, WorkflowContext
+│   │   ├── hooks/                 # Custom hooks (useNetwork, usePWA, etc.)
+│   │   ├── services/api.ts        # Axios API client
+│   │   └── types/                 # TypeScript types
+│   ├── public/                    # PWA manifest, logos
+│   ├── package.json
+│   └── vite.config.ts             # Port 5173
+│
+├── server/                        # Backend API (api.rizko.ai)
 │   ├── app/
-│   │   ├── api/                    # Endpoint handlers
-│   │   │   ├── competitors.py      # Competitor search & tracking
-│   │   │   ├── trends.py           # Trend search & scoring
-│   │   │   ├── favorites.py        # Saved videos
-│   │   │   ├── workflows.py        # Workflow CRUD & execution
-│   │   │   ├── chat_sessions.py    # AI chat
-│   │   │   ├── ai_scripts.py       # Script generation
-│   │   │   ├── proxy.py            # Image proxy (CORS bypass)
-│   │   │   ├── routes/auth.py      # Auth + OAuth
-│   │   │   ├── routes/oauth.py     # TikTok/Google OAuth
-│   │   │   ├── routes/stripe.py    # Subscriptions
-│   │   │   ├── routes/usage.py     # Credits tracking
-│   │   │   └── schemas/            # Pydantic schemas
+│   │   ├── api/                   # Endpoint handlers
+│   │   │   ├── competitors.py     # Competitor search & tracking
+│   │   │   ├── trends.py          # Trend search & scoring
+│   │   │   ├── favorites.py       # Saved videos
+│   │   │   ├── workflows.py       # Workflow CRUD & execution
+│   │   │   ├── chat_sessions.py   # AI chat
+│   │   │   ├── ai_scripts.py      # Script generation
+│   │   │   ├── proxy.py           # Image proxy (CORS bypass)
+│   │   │   ├── routes/auth.py     # Auth + OAuth
+│   │   │   ├── routes/oauth.py    # TikTok/Google OAuth
+│   │   │   ├── routes/stripe.py   # Subscriptions
+│   │   │   ├── routes/usage.py    # Credits tracking
+│   │   │   └── schemas/           # Pydantic schemas
 │   │   ├── core/
-│   │   │   ├── database.py         # SQLAlchemy engine (Supabase PG)
-│   │   │   ├── config.py           # Settings from .env
-│   │   │   └── security.py         # JWT, password hashing
+│   │   │   ├── database.py        # SQLAlchemy engine (Supabase PG)
+│   │   │   ├── config.py          # Settings from .env
+│   │   │   └── security.py        # JWT, password hashing
 │   │   ├── db/
-│   │   │   ├── models.py           # 14 SQLAlchemy models
-│   │   │   └── migrations/         # Alembic migrations
+│   │   │   ├── models.py          # 14 SQLAlchemy models
+│   │   │   └── migrations/        # Alembic migrations
 │   │   └── services/
-│   │       ├── collector.py        # TikTok data collection (Apify)
+│   │       ├── collector.py       # TikTok data collection (Apify)
 │   │       ├── instagram_collector.py
-│   │       ├── storage.py          # Supabase Storage (images)
-│   │       ├── scorer.py           # UTS viral scoring
-│   │       ├── video_analyzer.py   # AI video analysis
+│   │       ├── storage.py         # Supabase Storage (images)
+│   │       ├── scorer.py          # UTS viral scoring
+│   │       ├── video_analyzer.py  # AI video analysis
 │   │       └── gemini_script_generator.py
 │   ├── Dockerfile
 │   ├── railway.toml
 │   └── requirements.txt
 │
-├── ml-service/                     # ML microservice (optional)
+├── ml-service/                    # ML microservice (optional)
+├── review-mode-backup/            # Archived review mode code (not used)
 └── README.md
 ```
 
@@ -270,12 +329,28 @@ All user data is isolated via `user_id` FK with `CASCADE` delete.
 
 ## Deployment
 
-| Service | Platform | Config |
-|---------|----------|--------|
-| Frontend | Cloudflare Pages | `npm run build` → deploy `dist/` |
-| Backend | Railway | `Dockerfile` + `railway.toml` |
-| Database | Supabase | PostgreSQL (managed) |
-| Storage | Supabase | Bucket `rizko-images` |
+| Service | Platform | Project | Root | Config |
+|---------|----------|---------|------|--------|
+| **Landing** | Cloudflare Pages | `rizkoai` | `landing/` | `npm run build` → `dist/` |
+| **Dashboard** | Cloudflare Pages | `apprizkoai` | `client/` | `npm run build` → `dist/` |
+| **Backend** | Railway | — | `server/` | `Dockerfile` + `railway.toml` |
+| **Database** | Supabase | — | — | PostgreSQL (managed) |
+| **Storage** | Supabase | — | — | Bucket `rizko-images` |
+
+### Cloudflare Pages env variables
+
+**rizkoai (landing):**
+```
+VITE_APP_URL=https://app.rizko.ai
+```
+
+**apprizkoai (dashboard):**
+```
+VITE_API_URL=https://api.rizko.ai/api
+VITE_SUPABASE_URL=https://xxx.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJ...
+VITE_LANDING_URL=https://rizko.ai
+```
 
 ### Railway deploy
 
@@ -291,11 +366,12 @@ CMD sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $P
 | Layer | Technologies |
 |-------|-------------|
 | **Frontend** | React 19, Vite 6, TypeScript 5.6, Tailwind CSS, shadcn/ui, React Router 7, TanStack Query, Framer Motion, Recharts, Sonner |
+| **Landing** | React, Vite, Tailwind CSS, Framer Motion |
 | **Backend** | FastAPI, SQLAlchemy 2.0, Pydantic v2, Alembic, python-jose (JWT), APScheduler |
 | **Database** | Supabase PostgreSQL 17 (Transaction Pooler) |
 | **AI** | Anthropic Claude, Google Gemini, OpenAI |
 | **Data** | Apify (TikTok/Instagram scraping), Pillow + pillow-heif (HEIC conversion) |
-| **Infra** | Railway (backend), Cloudflare Pages (frontend), Supabase (DB + Storage + Auth) |
+| **Infra** | Railway (backend), Cloudflare Pages (frontend + landing), Supabase (DB + Storage + Auth) |
 
 ---
 
@@ -309,6 +385,8 @@ git push origin feature/my-feature
 ```
 
 **Commits**: Conventional Commits (`feat:`, `fix:`, `perf:`, `chore:`)
+
+**Auto-deploy**: Push to `main` → Cloudflare Pages auto-builds both `landing/` and `client/`.
 
 ---
 
